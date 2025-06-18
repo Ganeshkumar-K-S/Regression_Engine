@@ -16,6 +16,9 @@ class Model:
 
     def getModel(self):
         return self.__model
+    
+    def setModel(self,new_model):
+        self.__model=new_model
 
     def getMetrics(self):
         return self.__mode

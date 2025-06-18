@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from statsmodels.stats.stattools import durbin_watson as dbw
+import statsmodels.api as sm
 from scipy.stats import jarque_bera as jb
 
 def treat_null(df,cols,method,values=[]):
@@ -95,3 +96,45 @@ def normality_of_errors_test(model):
         'result':'success' if 0.05 <= p <0.05 else 'failure',
         'test_val_jb':p
     }
+
+#assumption-4 No Perfect Multicollinearity
+def perfect_multicollinearity_test(model):
+    pass
+
+#assumption-5 Equal Variance of errors
+def equal_variance_test(model):
+    pass
+
+#Fix
+#assumption-1 Linearity of feature-target relationship
+def fix_linearity(df,feature,method,degree=2):
+    try:
+        if method==1: # logarithimic transformation 
+            df[f'log({feature})']=np.log(df[feature])
+        elif method==2: # exponential transformation
+            df[f'exp({feature})']=np.exp(df[feature])
+        elif method==3: # polynomial transformation
+            for i in range(2,degree+1):
+                df[f'__{feature}^{degree}__']= df[feature] ** i
+        else:
+            raise ValueError('Invalid method')
+    except ValueError as e:
+        print(e)
+    finally:
+        return df
+
+#assumption-2 Independence of errors
+def fix_independence_of_errors(y,X):
+    return sm.GLS(y,X)
+
+#assumption-3 Normality of errors
+def fix_normality_of_errors():
+    pass
+
+#assumption-4 No Perfect Multicollinearity
+def fix_perfect_collinearity():
+    pass
+
+#assumption-5 Equal Variance of errors
+def fix_equal_variance():
+    pass
