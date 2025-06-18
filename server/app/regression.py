@@ -1,6 +1,6 @@
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error as mae, mean_squared_error as mse
+from sklearn.metrics import mean_absolute_error as mae, mean_squared_error as mse, r2_score as r2
 
 class Model:
     def __init__(self,df,target,features,test_size=0.2,random_state=42):
@@ -16,3 +16,6 @@ class Model:
 
     def getModel(self):
         return self.__model
+
+    def getMetrics(self):
+        return self.__mode
