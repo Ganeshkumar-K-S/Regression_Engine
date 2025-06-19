@@ -4,4 +4,8 @@ pandas>=2.2.2
 numpy>=1.26.4
 scikit-learn>=1.4.2
 statsmodels>=0.14.1
-scipy
+matplotlib>=3.5.0
+seaborn>=0.11.2
+scipy>=1.7.0
+
+

@@ -3,7 +3,8 @@ import pandas as pd
 from datetime import datetime
 from statsmodels.stats.stattools import durbin_watson as dbw
 import statsmodels.api as sm
-from scipy.stats import jarque_bera as jb
+from scipy.stats import jarque_bera as jb, boxcox
+import matplotlib.pyplot as plt
 
 def treat_null(df,cols,method,values=[]):
     try:
@@ -53,10 +54,12 @@ def treat_null(df,cols,method,values=[]):
         print(e)
     finally:
         return df
-
+    
+def treat_outliers():
+    pass
 
 def get_correlation_matrix(df,target,feature):
-    return df[*target,feature].corr()
+    return df[target,*feature].corr()
 #diagnose
 def get_correlation_feature(df,target,feature):
     res={}
@@ -69,7 +72,7 @@ def linearity_test(df,target,feature):
     failed=[]
     res=get_correlation_feature(df,target,feature)
     for key,value in res.items():
-        if value < 0.1:
+        if abs(value) < 0.1:
             failed.append(key)
     if not failed :
         return {
@@ -110,7 +113,7 @@ def equal_variance_test(model):
 def fix_linearity(df,feature,method,degree=2):
     try:
         if method==1: # logarithimic transformation 
-            df[f'log({feature})']=np.log(df[feature])
+            df[f'log({feature})']=np.log(df[feature]+1)
         elif method==2: # exponential transformation
             df[f'exp({feature})']=np.exp(df[feature])
         elif method==3: # polynomial transformation
@@ -125,12 +128,28 @@ def fix_linearity(df,feature,method,degree=2):
 
 #assumption-2 Independence of errors
 def fix_independence_of_errors(y,X):
-    return sm.GLS(y,X)
+    y=y.sample(frac=1)
+    X=X.sample(frac=1)
+    return sm.GLS(y,X).fit()
+
+
 
 #assumption-3 Normality of errors
-def fix_normality_of_errors():
-    pass
-
+def fix_normality_of_errors(df,feature,method):
+    try:
+        if method==1:
+            df[f'log({feature})']=np.log(df[feature]+1)
+        elif method==2:
+            df[f'sqrt({feature})']=np.sqrt(df[feature])
+        elif method==3:
+            if (df[feature] <= 0).any():
+                raise ValueError("value can't be negative for boxcox transformation")
+            df[f'boxcox({feature})'],_=boxcox(df[feature])
+    except ValueError as e:
+        print(e)
+    finally:
+        return df
+    
 #assumption-4 No Perfect Multicollinearity
 def fix_perfect_collinearity():
     pass
@@ -138,3 +157,11 @@ def fix_perfect_collinearity():
 #assumption-5 Equal Variance of errors
 def fix_equal_variance():
     pass
+
+
+def get_category_vars(df):
+    res={}
+    for col in df.columns:
+        if df[col].dtype==object :
+            res[col]=list(df[col].unique())
+    return res
