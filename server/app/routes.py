@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app,session
 from app.utils import get_attributes,to_dataframe,from_dataframe
 import app.cache as cache
 
@@ -9,10 +9,13 @@ engine = Blueprint('engine', __name__)
 def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
-        cache.uploads_path = os.path.join(upload_dir, f"{name}.{format}")
-        cache.format = format
-        cache.df = to_dataframe(cache.uploads_path, format)
-        res = get_attributes(cache.df)
+        if 'uid' not in session:
+            raise ValueError('Uid not in session')
+        uid=session.get('uid')
+        cache.cache[uid]['uploads_path'] = os.path.join(upload_dir, f"{name}.{format}")
+        cache.cache[uid]['format'] = format
+        cache.cache[uid]['df'] = to_dataframe(cache.uploads_path, format)
+        res = get_attributes(cache.cache[uid]['df'])
         return jsonify(res)
 
     except Exception as e:
@@ -37,7 +40,8 @@ def upload_file():
     try:
         if 'file' not in request.files:
             return 'No file part in the request', 400
-
+        uid=None
+        session['uid']=uid
         uploaded_file = request.files['file']
         
         if uploaded_file.filename == '':
@@ -51,7 +55,6 @@ def upload_file():
         save_filename = f'data{ext}'
         upload_dir = current_app.config['UPLOAD_FOLDER']
 
-        # ✅ Ensure the directory exists
         os.makedirs(upload_dir, exist_ok=True)
 
         save_path = os.path.join(upload_dir, save_filename)
@@ -64,3 +67,18 @@ def upload_file():
         print(e)
         return jsonify({'Error': str(e)}), 501
 
+@engine.route('/clearcache')
+def clear_cache():
+    status=200
+    try:
+         if 'uid' not in session:
+             raise ValueError('session dont have uid')
+         del session['uid']
+    except ValueError as e:
+        print(e)
+        status=403
+    except KeyError as e:
+        print("uid not found in session")
+        status=404
+    finally:
+        return status
