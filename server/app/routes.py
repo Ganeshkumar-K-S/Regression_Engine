@@ -22,8 +22,8 @@ def send_dataframe():
             raise ValueError('df frame is empty')
         res=from_dataframe(cache.df,'json')
     except ValueError as e:
-        res={'error':str(e)}
+        res=jsonify({'error':str(e)})
     finally:
-        return jsonify(res)
+        return res
 
     
