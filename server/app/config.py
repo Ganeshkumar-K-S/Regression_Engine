@@ -8,6 +8,6 @@ class Config:
     CORS_HEADERS = 'Content-Type'
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024 
+    MAX_CONTENT_LENGTH = 250  * 1024 * 1024 
     ALLOWED_EXTENSIONS = {'csv', 'json', 'xlsx', 'xls', 'txt'}
 

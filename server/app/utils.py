@@ -132,8 +132,6 @@ def fix_independence_of_errors(y,X):
     X=X.sample(frac=1)
     return sm.GLS(y,X).fit()
 
-
-
 #assumption-3 Normality of errors
 def fix_normality_of_errors(df,feature,method):
     try:
@@ -158,10 +156,33 @@ def fix_perfect_collinearity():
 def fix_equal_variance():
     pass
 
-
 def get_category_vars(df):
     res={}
     for col in df.columns:
         if df[col].dtype==object :
             res[col]=list(df[col].unique())
     return res
+
+def get_attributes(df):
+    res = {}
+    for col in df.columns:
+        res[col] = df[col].dtype == object
+    return res
+
+def bayesian_target_encoding(df, target, feature, alpha=5):
+    overall_mean = df[target].mean()
+    agg = df.groupby(feature)[target].agg(['mean', 'count'])
+    agg['encoded'] = (agg['mean'] * agg['count'] + overall_mean * alpha) / (agg['count'] + alpha)
+    return df[feature].map(agg['encoded'])
+
+def encoding(df, target, features):
+    for col in features:
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            unique_vals = df[col].nunique()
+            if unique_vals < 5:
+                for val in df[col].unique():
+                    df[f'{col}_{val}'] = (df[col] == val).astype(int)
+                df.drop(columns=[col], inplace=True)
+            else:
+                df[col] = bayesian_target_encoding(df, target, col)
+    return df
