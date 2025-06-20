@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, request, jsonify, current_app,session
 from app.utils import get_attributes,to_dataframe,from_dataframe
 import app.cache as cache
-
+import app.utils as utils
 engine = Blueprint('engine', __name__)
 
 @engine.get('/getattributes/<name>/<format>')
@@ -122,7 +122,7 @@ def api_treat_null():
 
             value_list = [value] if value is not None else []
 
-            cache.cache[uid]['df'] = treat_null(cache.cache[uid]['df'], col_name, method, value_list)
+            cache.cache[uid]['df'] = utils.treat_null(cache.cache[uid]['df'], col_name, method, value_list)
 
         return 
 
