@@ -1,41 +1,157 @@
-import React from 'react';
-import '../index.css';
+import React, { useState } from 'react';
+import { TrashIcon } from '@heroicons/react/24/outline';
+import csvIcon from '../assets/csv.png';
+import jsonIcon from '../assets/json.png';
 
-export default function DropFiles() {
-    return (
-        <div className="flex justify-center min-h-screen pt-10"> {/* Center on screen */}
-            <label
-                htmlFor="dropzone-file"
-                className="flex flex-col items-center justify-center w-[36rem] h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+const MAX_SIZE_MB = 256;
+
+export default function DropFiles({ uploadedFile, setUploadedFile }) {
+  const [error, setError] = useState('');
+  const [hasUploaded, setHasUploaded] = useState(!!uploadedFile); // init from prop
+
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+
+    if (files.length > 1) {
+      setError('Only one file can be uploaded at a time.');
+      setUploadedFile(null);
+      return;
+    }
+
+    const file = files[0];
+    if (!file) return;
+
+    const isValidType = file.type === 'application/json' || file.name.endsWith('.csv');
+    const isValidSize = file.size <= MAX_SIZE_MB * 1024 * 1024;
+
+    if (!isValidType) {
+      setError('Only CSV or JSON files are allowed.');
+      setUploadedFile(null);
+      return;
+    }
+
+    if (!isValidSize) {
+      setError('File size exceeds 256MB.');
+      setUploadedFile(null);
+      return;
+    }
+
+    setUploadedFile(file);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/uploads/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        setError(`Upload failed: ${errorText}`);
+        setUploadedFile(null);
+      } else {
+        const msg = await response.text();
+        console.log(msg);
+        setHasUploaded(true); // lock after success
+      }
+    } catch (err) {
+      setError('Failed to upload. Please try again.');
+      setUploadedFile(null);
+    }
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    setError('');
+    setHasUploaded(false);
+    document.getElementById('dropzone-file').value = null;
+  };
+
+  const getIcon = () => {
+    if (!uploadedFile) return null;
+    if (uploadedFile.name.endsWith('.csv')) return csvIcon;
+    if (uploadedFile.name.endsWith('.json')) return jsonIcon;
+    return null;
+  };
+
+  return (
+    <div className="flex justify-center py-12 px-4">
+      <div className="w-full max-w-2xl">
+        <label
+          htmlFor="dropzone-file"
+          className={`flex flex-col justify-between w-full min-h-[22rem] border-2 rounded-2xl px-6 py-8 transition
+            ${hasUploaded ? 'bg-gray-100 cursor-not-allowed border-gray-200' : 'border-dashed cursor-pointer bg-gray-50 hover:bg-gray-100'}
+          `}
+          onClick={(e) => hasUploaded && e.preventDefault()}
+        >
+          {/* Top Section */}
+          <div className="flex flex-col items-center justify-center flex-1">
+            <svg
+              className="w-10 h-10 mb-4 text-gray-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 20 16"
             >
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg
-                        className="w-8 h-8 mb-4 text-gray-500"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 20 16"
-                    >
-                        <path
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-                        />
-                    </svg>
-                    <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+              />
+            </svg>
+            <p className="mb-2 text-sm text-gray-600">
+              <span className="font-semibold">Click to upload</span> or drag and drop
+            </p>
+            <p className="text-xs text-gray-500">CSV or JSON files only (MAX. 256MB)</p>
+          </div>
+
+          {/* Bottom Section */}
+          <div className="mt-6 space-y-2">
+            {uploadedFile && (
+              <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-inner">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border">
+                    <img src={getIcon()} alt="icon" className="w-6 h-6 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800 truncate max-w-[12rem]">
+                      {uploadedFile.name}
                     </p>
-                    <p className="text-xs text-gray-500">CSV or JSON files only (MAX. 2MB)</p>
+                    <p className="text-xs text-gray-600">
+                      {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
                 </div>
-                <input
-                    id="dropzone-file"
-                    type="file"
-                    accept=".csv,application/json"
-                    className="hidden"
-                />
-            </label>
-        </div>
-    );
+                <button
+                  type="button"
+                  className="btn btn-sm btn-circle btn-ghost"
+                  onClick={removeFile}
+                >
+                  <TrashIcon className="w-5 h-5 text-red-500" />
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-sm text-red-600 font-medium text-center">{error}</p>
+            )}
+          </div>
+
+          <input
+            id="dropzone-file"
+            type="file"
+            accept=".csv,application/json"
+            multiple={false}
+            className="hidden"
+            disabled={hasUploaded}
+            onChange={handleFileChange}
+          />
+        </label>
+      </div>
+    </div>
+  );
 }

@@ -15,4 +15,7 @@ Run:
 
 ```
 npm install tailwindcss @tailwindcss/vite
+npm install react-dropzone @heroicons/react @hello-pangea/dnd
+
+npm run dev
 ```
