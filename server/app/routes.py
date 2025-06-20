@@ -82,3 +82,20 @@ def clear_cache():
         status=404
     finally:
         return status
+    
+@engine.post('/gettargetfeature')
+def get_target_feature():
+    status=200
+    try:
+        response=request.get_json()
+        if 'uid' not in session:
+            raise KeyError('uid not in session')
+        uid=session.get('uid')
+        cache.cache[uid]['target']=response['target']
+        cache.cache[uid]['feature']=response['feature']
+    except Exception as e:
+        print(e)
+        status=403
+    finally:
+        return status
+    
