@@ -10,30 +10,34 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            raise ValueError('Uid not in session')
+            raise KeyError('uid not in session')
         uid=session.get('uid')
+        print(uid)
+        cache.cache[uid]={}
         cache.cache[uid]['uploads_path'] = os.path.join(upload_dir, f"{name}.{format}")
         cache.cache[uid]['format'] = format
-        cache.cache[uid]['df'] = to_dataframe(cache.uploads_path, format)
+        cache.cache[uid]['df'] = to_dataframe(cache.cache[uid]['uploads_path'], format)
         res = get_attributes(cache.cache[uid]['df'])
         return jsonify(res)
 
     except Exception as e:
         print(str(e))
-        return jsonify({'Error': str(e)}), 501
-
+        return jsonify({'Error': str(e)})
 
 @engine.get('/getdataframejson')
 def send_dataframe():
     res={}
     try:
-        if cache.df is None:
-            raise ValueError('df frame is empty')
-        res=from_dataframe(cache.df,'json')
+        if 'uid' not in session:
+            raise KeyError("uid is not in the session")
+        uid=session.get('uid')
+        if cache.cache[uid]['df'] is None:
+            raise ValueError('dataframe is empty')
+        res=from_dataframe(cache.cache[uid]['df'],'json')
+        return res
     except ValueError as e:
         res=jsonify({'error':str(e)})
-    finally:
-        return res
+
 
 @engine.route('/uploads/', methods=['POST'])
 def upload_file():
@@ -67,21 +71,22 @@ def upload_file():
         print(e)
         return jsonify({'Error': str(e)}), 501
 
-@engine.route('/clearcache')
+@engine.delete('/clearcache')
 def clear_cache():
-    status=200
     try:
-         if 'uid' not in session:
-             raise ValueError('session dont have uid')
-         del session['uid']
+        if 'uid' not in session:
+            raise ValueError('session does not have uid')
+        
+        del session['uid']
+        return jsonify({'message': 'Cache cleared successfully'}), 200
+    
     except ValueError as e:
         print(e)
-        status=403
-    except KeyError as e:
+        return jsonify({'error': str(e)}), 403
+
+    except KeyError:
         print("uid not found in session")
-        status=404
-    finally:
-        return status
+        return jsonify({'error': 'uid not found in session'}), 404
     
 @engine.post('/gettargetfeature')
 def get_target_feature():
