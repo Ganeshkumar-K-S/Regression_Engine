@@ -9,45 +9,42 @@ from statsmodels.stats.diagnostic import het_breuschpagan
 from scipy.stats import zscore
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
 
-def treat_null(df,cols,method,values=[]):
+def treat_null(df,col,method,value=[]):
     try:
         if method==1: #drop null values
-            df.dropna(subset=cols,inplace=True)
+            df.dropna(subset=[col],inplace=True)
 
         elif method==2: #fill with give values
-            if values is None:
+            if value is None:
                 raise ValueError("No values provided")
             
-            if len(cols)!=len(values):
+            if len(col)!=len(value):
                 raise IndexError("Length of columns and fill values are different")
 
-            for (col,val) in zip(cols,values):
-                if not (pd.api.types.is_numeric_dtype(df[col]) and isinstance(val,(int,float))
-                or (df[col].dtype == object or pd.api.types.is_string_dtype(df[col])) and isinstance(val, str)
-                or pd.api.types.is_datetime64_any_dtype(df[col]) and isinstance(val,datetime)):
+            if not (pd.api.types.is_numeric_dtype(df[col]) and isinstance(value,(int,float))
+                or (df[col].dtype == object or pd.api.types.is_string_dtype(df[col])) and isinstance(value, str)
+                or pd.api.types.is_datetime64_any_dtype(df[col]) and isinstance(value,datetime)):
                     raise ValueError("Value miss match in columns and given values")
-                else:
-                    df[col]=df[col].fillna(val)
+            else:
+                    df[col]=df[col].fillna(value[0])
 
         elif method==3: #forward fill
-            df[cols]=df[cols].fillna(method='ffill')
+            df[col]=df[col].fillna(method='ffill')
 
         elif method==4: #backward fill
-            df[cols]=df[cols].fillna(method='bfill') 
+            df[col]=df[col].fillna(method='bfill') 
 
         elif method==5: #mean for numeric data and mode for other types
-            for col in cols:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    df[col]=df[col].fillna(df[col].mean())
-                else:
-                    df[col]=df[col].fillna(df[col].mode()[0])
+            if pd.api.types.is_numeric_dtype(df[col]):
+                df[col]=df[col].fillna(df[col].mean())
+            else:
+                df[col]=df[col].fillna(df[col].mode()[0])
 
         elif method==6: #median for numeric data and mode for other types
-            for col in cols:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    df[col]=df[col].fillna(df[col].median())
-                else:
-                    df[col]=df[col].fillna(df[col].mode()[0])
+            if pd.api.types.is_numeric_dtype(df[col]):
+                df[col]=df[col].fillna(df[col].median())
+            else:
+                df[col]=df[col].fillna(df[col].mode()[0])
         else:
             raise ValueError('Invalid Option')
       

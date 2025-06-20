@@ -99,3 +99,31 @@ def get_target_feature():
     finally:
         return status
     
+@engine.route('/treat-null/<method>', methods=['POST'])
+def api_treat_null():
+    status=200
+    try:
+        response = request.get_json()
+        if 'uid' not in session:
+            raise KeyError('uid not in session')
+        uid=session.get('uid')
+
+        for col_name, config in response.items():
+            method = config.get('method')
+            value = config.get('value', None)
+
+            if method is None:
+                return jsonify({'error': f'Method missing for column "{col_name}"'}), 400
+
+            value_list = [value] if value is not None else []
+
+            cache.cache[uid]['df'] = treat_null(cache.cache[uid]['df'], col_name, method, value_list)
+
+        return 
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        return status
+
+    
