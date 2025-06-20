@@ -5,6 +5,9 @@ from statsmodels.stats.stattools import durbin_watson as dbw
 import statsmodels.api as sm
 from scipy.stats import jarque_bera as jb, boxcox
 import matplotlib.pyplot as plt
+from statsmodels.stats.diagnostic import het_breuschpagan
+from scipy.stats import zscore
+from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
 
 def treat_null(df,cols,method,values=[]):
     try:
@@ -55,8 +58,56 @@ def treat_null(df,cols,method,values=[]):
     finally:
         return df
     
-def treat_outliers():
-    pass
+def outliers(df, model, method, features):
+    try:
+        if method == 1:
+            # Cook's Distance (requires model)
+            if model is None:
+                raise ValueError("Model is required for method 1 (Cook's Distance)")
+            influence = model.get_influence()
+            cooks_d, _ = influence.cooks_distance
+            outliers = np.where(cooks_d > 1)[0].tolist()
+
+        elif method == 2:
+            # IQR method
+            if features is None:
+                features = df.select_dtypes(include=[np.number]).columns
+
+            outlier_indices = set()
+
+            for col in features:
+                if not pd.api.types.is_numeric_dtype(df[col]):
+                    continue  # Skip non-numeric columns
+
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+
+                outliers_in_col = df[(df[col] < lower_bound) | (df[col] > upper_bound)].index
+                outlier_indices.update(outliers_in_col)
+
+            outliers = list(outlier_indices)
+
+        elif method == 3:
+            # Z-score method
+            zscores = df.select_dtypes(include=[np.number]).apply(zscore)
+            outlier_rows = (zscores.abs() > 3).any(axis=1)
+            outliers = df[outlier_rows].index.tolist()
+
+        else:
+            raise ValueError("Invalid Option: method must be 1 (Cook), 2 (IQR), or 3 (Z-score)")
+
+    except ValueError as e:
+        print("ValueError:", e)
+        outliers = []
+
+    return {
+        'outlier': outliers,
+        'outlier_percentage': (len(outliers) / df.shape[0]) * 100
+    }
+
 
 def get_correlation_matrix(df,target,feature):
     return df[target,*feature].corr()
@@ -101,12 +152,40 @@ def normality_of_errors_test(model):
     }
 
 #assumption-4 No Perfect Multicollinearity
-def perfect_multicollinearity_test(model):
-    pass
+def perfect_multicollinearity_test(df, features, threshold=5.0):
+    X = df[features]
+    X = sm.add_constant(X)
 
-#assumption-5 Equal Variance of errors
-def equal_variance_test(model):
-    pass
+    vif_values = {}
+    for i in range(1,X.shape[1]):  # skip the constant
+        vif_score = vif(X.values, i)
+        vif_values[features[i-1]] = round(vif_score, 1)
+
+    high_vif = [feat for feat, v in vif_values.items() if v > threshold]
+
+    return {
+        'result': 'success' if not high_vif else 'failure',
+        'vif': vif_values,
+        'high_vif_features': high_vif
+    }
+
+def equal_variance_test(df, features, target, alpha=0.05):
+    violating_features = {}
+    for feature in features:
+        X = sm.add_constant(df[[feature]])
+        y = df[target]
+
+        model = sm.OLS(y, X).fit()
+        residuals = model.resid
+        exog = model.model.exog
+
+        bp_test = het_breuschpagan(residuals, exog)
+        p_value = bp_test[1]  # p-value
+
+        if p_value < alpha:
+            violating_features[feature]=p_value
+
+    return violating_features
 
 #Fix
 #assumption-1 Linearity of feature-target relationship
@@ -149,12 +228,41 @@ def fix_normality_of_errors(df,feature,method):
         return df
     
 #assumption-4 No Perfect Multicollinearity
-def fix_perfect_collinearity():
-    pass
+def fix_perfect_collinearity(df, method, feature):
+    try:
+        if len(method) != len(feature):
+            raise IndexError("Length of columns and methods to resolve are different")
+
+        for i in range(len(method)):
+            if method[i] == 1:
+                continue  # Keep the feature
+            elif method[i] == 2:
+                df.drop(columns=[feature[i]], inplace=True)  # Drop the feature
+            else:
+                raise ValueError("Invalid Option: Only 1 (keep) or 2 (drop) allowed")
+
+    except ValueError as e:
+        print("ValueError:", e)
+    except IndexError as e:
+        print("IndexError:", e)
+    finally:
+        return df
 
 #assumption-5 Equal Variance of errors
-def fix_equal_variance():
-    pass
+def fix_equal_variance_test(df,method,feature):
+    try:
+        if method==1:
+            df[f'log({feature})']=np.log(df[feature]+1)
+        elif method==2:
+            df[f'sqrt({feature})']=np.sqrt(df[feature])
+        elif method==3:
+            if (df[feature] <= 0).any():
+                raise ValueError("value can't be negative for boxcox transformation")
+            df[f'boxcox({feature})'],_=boxcox(df[feature])
+    except ValueError as e:
+        print(e)
+    finally:
+        return df
 
 def get_category_vars(df):
     res={}
