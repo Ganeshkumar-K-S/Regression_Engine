@@ -26,4 +26,9 @@ def send_dataframe():
     finally:
         return res
 
+@engine.route('/uploads/', methods=['POST'])
+def upload_file():
+    uploaded_file = request.files['file']
+    uploaded_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], 'data.csv'))
+    return 'File uploaded successfully', 200
     
