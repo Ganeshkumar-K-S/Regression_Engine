@@ -186,3 +186,17 @@ def encoding(df, target, features):
             else:
                 df[col] = bayesian_target_encoding(df, target, col)
     return df
+
+def to_dataframe(filepath,format):
+    if format=='json':
+        return pd.read_json(filepath)
+    else:
+        return pd.read_csv(filepath)
+    
+def from_dataframe(df,format):
+    if format=='json':
+        return df.to_json(orient='records')
+    else:
+        return df.to_csv('data.csv')
+    
+    
