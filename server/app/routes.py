@@ -81,10 +81,18 @@ def clear_cache():
         if 'uid' not in session:
             raise ValueError('session does not have uid')
         
-        del session['uid']
+        uid = session.get('uid')
+        if uid in cache.cache and 'uploads_path' in cache.cache[uid]:
+            file_path = cache.cache[uid]['uploads_path']
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            else:
+                raise FileNotFoundError("File not found")
+        cache.cache.pop(uid, None)
+        session.pop('uid', None)
         session.clear()
-        return jsonify({'message': 'Cache cleared successfully'}), 200
-    
+        return jsonify({'message': 'Cache and file cleared successfully'}), 200
+
     except ValueError as e:
         print(e)
         return jsonify({'error': str(e)}), 403
@@ -92,6 +100,10 @@ def clear_cache():
     except KeyError:
         print("uid not found in session")
         return jsonify({'error': 'uid not found in session'}), 404
+
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 500
     
 @engine.post('/gettargetfeature')
 def get_target_feature():
