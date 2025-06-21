@@ -1,10 +1,14 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-export default function Attributes({ uploadedFile , uploadUUID}) {
-  const [attributes, setAttributes] = useState(null);
+export default function Attributes({ uploadedFile, uploadUUID, attributes, setAttributes }) {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [visibleTooltipIndex, setVisibleTooltipIndex] = useState(null);
+  const refs = useRef([]);
+  const tooltipRef = useRef(null);
+  const [tooltipContent, setTooltipContent] = useState('');
+  const [tooltipStyle, setTooltipStyle] = useState({});
 
   useEffect(() => {
     if (!uploadedFile || !uploadUUID) return;
@@ -29,8 +33,7 @@ export default function Attributes({ uploadedFile , uploadUUID}) {
     };
 
     fetchAttributes();
-  }, [uploadedFile, uploadUUID]);
-
+  }, [uploadedFile, uploadUUID, setAttributes]);
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -47,11 +50,31 @@ export default function Attributes({ uploadedFile , uploadUUID}) {
     );
   }, [attributes, search]);
 
+  const handleMouseEnter = (index, key) => {
+    const el = refs.current[index];
+    if (el && el.scrollWidth > el.clientWidth) {
+      const rect = el.getBoundingClientRect();
+      setTooltipStyle({
+        top: `${rect.top - 42}px`,
+        left: `${rect.left + rect.width / 2}px`,
+      });
+      setTooltipContent(key);
+      setVisibleTooltipIndex(index);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setVisibleTooltipIndex(null);
+    setTooltipContent('');
+  };
+
   if (!uploadedFile) return null;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto font-montserrat">
-      <h2 className="text-2xl font-semibold mb-4 text-center text-chrysler-blue-600">🧩 Attribute Keys</h2>
+    <div className="p-6 max-w-6xl mx-auto font-montserrat relative">
+      <h2 className="text-2xl font-semibold mb-4 text-center" style={{ color: 'var(--color-chrysler-blue-600)' }}>
+        🧩 Attribute Keys
+      </h2>
 
       {error && <p className="text-red-600">{error}</p>}
 
@@ -60,14 +83,38 @@ export default function Attributes({ uploadedFile , uploadUUID}) {
         placeholder="Search attributes..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full p-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-chrysler-blue-600 text-md-montserrat"
+        className="w-full p-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 text-md-montserrat"
+        style={{
+          borderColor: 'var(--color-chrysler-blue-300)',
+          outlineColor: 'var(--color-chrysler-blue-600)',
+        }}
       />
+
+      {/* Tooltip floating above all */}
+      {visibleTooltipIndex !== null && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: 'fixed',
+            transform: 'translateX(-50%)',
+            zIndex: 50,
+            ...tooltipStyle,
+            backgroundColor: 'var(--color-chrysler-blue-600)',
+            color: 'white',
+          }}
+          className="px-3 py-2 text-sm font-medium rounded-lg shadow-lg transition-opacity duration-200"
+          role="tooltip"
+        >
+          {tooltipContent}
+          <div className="tooltip-arrow" />
+        </div>
+      )}
 
       {attributes && (
         <div className="border rounded-lg p-4 bg-gray-50 shadow-inner max-h-64 overflow-y-auto">
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="attribute-keys">
-              {provided => (
+              {(provided) => (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
@@ -75,14 +122,29 @@ export default function Attributes({ uploadedFile , uploadUUID}) {
                 >
                   {filteredAttributes.map((key, index) => (
                     <Draggable key={key} draggableId={key} index={index}>
-                      {provided => (
+                      {(provided) => (
                         <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="bg-white p-3 text-sm-montserrat text-chrysler-blue-600 rounded border shadow cursor-grab hover:bg-gray-200"
+                          onMouseEnter={() => handleMouseEnter(index, key)}
+                          onMouseLeave={handleMouseLeave}
+                          className="relative group"
                         >
-                          {key}
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="p-3 text-sm-montserrat rounded border shadow cursor-grab overflow-hidden 
+                                      bg-white text-[color:var(--color-chrysler-blue-600)] 
+                                      border-[color:var(--color-chrysler-blue-200)] 
+                                      hover:bg-gray-200 transition-colors duration-200"
+                          >
+
+                            <span
+                              ref={(el) => (refs.current[index] = el)}
+                              className="block overflow-hidden text-ellipsis whitespace-nowrap"
+                            >
+                              {key}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </Draggable>

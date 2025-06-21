@@ -11,9 +11,12 @@ export default function Header() {
       </div>
 
       {/* Centered Title */}
-      <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-semibold font-montserrat text-chrysler-blue-600">
-        Inference Engine
+      <h1
+        className="absolute left-1/2 transform -translate-x-1/2 font-montserrat font-semibold text-chrysler-blue-600 text-[6vw] sm:text-xl md:text-2xl whitespace-nowrap"
+      >
+        Regression Engine
       </h1>
+
 
       {/* Right side spacer to keep layout balanced */}
       <div className="w-10 h-10 z-0" />
