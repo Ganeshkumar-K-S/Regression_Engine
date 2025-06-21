@@ -9,7 +9,7 @@ from statsmodels.stats.diagnostic import het_breuschpagan
 from scipy.stats import zscore
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
 
-def treat_null(df,col,method,value=[]):
+def treat_null(df,col,method,value=None):
     try:
         if method==1: #drop null values
             df.dropna(subset=[col],inplace=True)
@@ -281,7 +281,10 @@ def encoding(df, target, features, ignore_first=False):
     for col in features:
         if not pd.api.types.is_numeric_dtype(df[col]):
             unique_vals = df[col].nunique()
-            if unique_vals < 5:
+            if unique_vals == 1:
+                unique_val=df[col].unique()
+                df[col]=df[col].map({unique_val:1})
+            if  1 < unique_vals < 5:
                 unique_categories = list(df[col].unique())
                 if ignore_first:
                     unique_categories = unique_categories[1:]

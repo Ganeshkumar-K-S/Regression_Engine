@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify, current_app,session
-from app.utils import get_attributes,to_dataframe,from_dataframe
+from app.utils import get_attributes,to_dataframe,from_dataframe,encoding
 import app.cache as cache
 import app.utils as utils
 import uuid
@@ -12,7 +12,8 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            raise KeyError('uid not in session')
+            # raise KeyError('uid not in session')
+            session['uid']='u0001'
         uid=session.get('uid')
         print(uid)
         cache.cache[uid]={}
@@ -107,19 +108,20 @@ def clear_cache():
     
 @engine.post('/gettargetfeature')
 def get_target_feature():
-    status=200
     try:
         response=request.get_json()
         if 'uid' not in session:
             raise KeyError('uid not in session')
         uid=session.get('uid')
+        if 'target' not in response:
+            raise KeyError('target is not in the session')
+        if 'feature' not in response:
+            raise KeyError('feature is not in the session')
         cache.cache[uid]['target']=response['target']
         cache.cache[uid]['feature']=response['feature']
+        return jsonify(response)
     except Exception as e:
-        print(e)
-        status=403
-    finally:
-        return status
+        return jsonify({"error":str(e)})
     
 @engine.route('/treat-null/<method>', methods=['POST'])
 def api_treat_null():
@@ -146,4 +148,29 @@ def api_treat_null():
     finally:
         return status
 
+@engine.route('/getencode')
+def get_encode():
+    try:
+        if 'uid' not in session:
+            raise KeyError('Uid is not in the session')
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+
+        if 'feature' not in cache.cache[uid]:
+            raise KeyError('feature not in the session')
+        if 'target' not in cache.cache[uid]:
+            raise KeyError('Target not in session')
+        if 'df' not in cache.cache[uid]:
+            raise KeyError("dataframe is not in cache")
+        
+        target=cache.cache[uid]['target']
+        feature=cache.cache[uid]['feature']
+        cache.cache[uid]['df']= cache.cache[uid]['df'][[target] + feature]
+        cache.cache[uid]['df']=encoding(cache.cache[uid]['df'],target,feature,ignore_first=True)
+        return from_dataframe(cache.cache[uid]['df'],"json")
+    
+    except Exception as e:
+        return jsonify({"error":str(e)})
     
