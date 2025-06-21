@@ -18,9 +18,6 @@ def treat_null(df,col,method,value=[]):
             if value is None:
                 raise ValueError("No values provided")
             
-            if len(col)!=len(value):
-                raise IndexError("Length of columns and fill values are different")
-
             if not (pd.api.types.is_numeric_dtype(df[col]) and isinstance(value,(int,float))
                 or (df[col].dtype == object or pd.api.types.is_string_dtype(df[col])) and isinstance(value, str)
                 or pd.api.types.is_datetime64_any_dtype(df[col]) and isinstance(value,datetime)):

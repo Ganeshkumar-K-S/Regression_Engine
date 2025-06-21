@@ -120,11 +120,9 @@ def api_treat_null():
             if method is None:
                 return jsonify({'error': f'Method missing for column "{col_name}"'}), 400
 
-            value_list = [value] if value is not None else []
+            cache.cache[uid]['df'] = utils.treat_null(cache.cache[uid]['df'], col_name, method, value)
 
-            cache.cache[uid]['df'] = utils.treat_null(cache.cache[uid]['df'], col_name, method, value_list)
-
-        return 
+        return jsonify({'message': 'Null treatment applied successfully'}), 200 
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
