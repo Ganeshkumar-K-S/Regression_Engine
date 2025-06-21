@@ -5,12 +5,14 @@ import jsonIcon from '../assets/json.png';
 
 const MAX_SIZE_MB = 256;
 
-export default function DropFiles({ uploadedFile, setUploadedFile }) {
+export default function DropFiles({ uploadedFile, setUploadedFile, uploadUUID, setUploadUUID }) {
+
   const [error, setError] = useState('');
-  const [hasUploaded, setHasUploaded] = useState(!!uploadedFile); // init from prop
+  const [hasUploaded, setHasUploaded] = useState(!!uploadedFile);
 
   const handleFileChange = async (e) => {
-    const files = e.target.files;
+    const files = e.target.files || e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
 
     if (files.length > 1) {
       setError('Only one file can be uploaded at a time.');
@@ -19,8 +21,6 @@ export default function DropFiles({ uploadedFile, setUploadedFile }) {
     }
 
     const file = files[0];
-    if (!file) return;
-
     const isValidType = file.type === 'application/json' || file.name.endsWith('.csv');
     const isValidSize = file.size <= MAX_SIZE_MB * 1024 * 1024;
 
@@ -46,6 +46,7 @@ export default function DropFiles({ uploadedFile, setUploadedFile }) {
       const response = await fetch('http://localhost:5000/api/uploads/', {
         method: 'POST',
         body: formData,
+        credentials: 'include', // ensure cookies/session are retained
       });
 
       if (!response.ok) {
@@ -53,20 +54,30 @@ export default function DropFiles({ uploadedFile, setUploadedFile }) {
         setError(`Upload failed: ${errorText}`);
         setUploadedFile(null);
       } else {
-        const msg = await response.text();
-        console.log(msg);
-        setHasUploaded(true); // lock after success
+        const data = await response.json();
+        console.log(data.message);
+        console.log("UUID:", data.uuid);
+        setUploadUUID(data.uuid);
+        setHasUploaded(true);
       }
     } catch (err) {
+      console.error(err);
       setError('Failed to upload. Please try again.');
       setUploadedFile(null);
     }
   };
 
-  const removeFile = () => {
+  const removeFile = async () => {
+    try {
+      await fetch('http://localhost:5000/api/clearcache', { method: 'DELETE', credentials: 'include' });
+    } catch (err) {
+      console.error('Failed to clear cache:', err);
+    }
+
     setUploadedFile(null);
-    setError('');
     setHasUploaded(false);
+    setError('');
+    setUploadUUID(null);
     document.getElementById('dropzone-file').value = null;
   };
 
@@ -86,6 +97,13 @@ export default function DropFiles({ uploadedFile, setUploadedFile }) {
             ${hasUploaded ? 'bg-gray-100 cursor-not-allowed border-gray-200' : 'border-dashed cursor-pointer bg-gray-50 hover:bg-gray-100'}
           `}
           onClick={(e) => hasUploaded && e.preventDefault()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (hasUploaded) return;
+            const file = e.dataTransfer.files?.[0];
+            if (file) handleFileChange({ target: { files: [file] } });
+          }}
         >
           {/* Top Section */}
           <div className="flex flex-col items-center justify-center flex-1">
@@ -135,7 +153,7 @@ export default function DropFiles({ uploadedFile, setUploadedFile }) {
                 </button>
               </div>
             )}
-
+            
             {error && (
               <p className="text-sm text-red-600 font-medium text-center">{error}</p>
             )}

@@ -11,7 +11,7 @@ export default function Header() {
       </div>
 
       {/* Centered Title */}
-      <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-semibold font-montserrat text-chrysler-blue">
+      <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-semibold font-montserrat text-chrysler-blue-600">
         Inference Engine
       </h1>
 

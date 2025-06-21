@@ -3,6 +3,8 @@ from flask import Blueprint, request, jsonify, current_app,session
 from app.utils import get_attributes,to_dataframe,from_dataframe
 import app.cache as cache
 import app.utils as utils
+import uuid
+
 engine = Blueprint('engine', __name__)
 
 @engine.get('/getattributes/<name>/<format>')
@@ -44,32 +46,34 @@ def upload_file():
     try:
         if 'file' not in request.files:
             return 'No file part in the request', 400
-        uid=None
-        session['uid']=uid
+
         uploaded_file = request.files['file']
-        
         if uploaded_file.filename == '':
             return 'No selected file', 400
 
         ext = os.path.splitext(uploaded_file.filename)[1].lower()
-
         if ext not in ['.csv', '.json']:
             return 'Invalid file format. Only CSV and JSON are allowed.', 400
 
-        save_filename = f'data{ext}'
+        # Generate UUID and store in session
+        file_uuid = str(uuid.uuid4())
+        session['uid'] = file_uuid
+
+        # Save the file
+        save_filename = f"{file_uuid}{ext}"
         upload_dir = current_app.config['UPLOAD_FOLDER']
-
         os.makedirs(upload_dir, exist_ok=True)
-
         save_path = os.path.join(upload_dir, save_filename)
-
         uploaded_file.save(save_path)
 
-        return f'File uploaded successfully as {save_filename}', 200
+        return jsonify({
+            'message': f'File uploaded successfully as {save_filename}',
+            'uuid': file_uuid
+        }), 200
 
     except Exception as e:
         print(e)
-        return jsonify({'Error': str(e)}), 501
+        return jsonify({'error': str(e)}), 501
 
 @engine.delete('/clearcache')
 def clear_cache():
@@ -78,6 +82,7 @@ def clear_cache():
             raise ValueError('session does not have uid')
         
         del session['uid']
+        session.clear()
         return jsonify({'message': 'Cache cleared successfully'}), 200
     
     except ValueError as e:
