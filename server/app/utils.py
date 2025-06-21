@@ -277,12 +277,15 @@ def bayesian_target_encoding(df, target, feature, alpha=5):
     agg['encoded'] = (agg['mean'] * agg['count'] + overall_mean * alpha) / (agg['count'] + alpha)
     return df[feature].map(agg['encoded'])
 
-def encoding(df, target, features):
+def encoding(df, target, features, ignore_first=False):
     for col in features:
         if not pd.api.types.is_numeric_dtype(df[col]):
             unique_vals = df[col].nunique()
             if unique_vals < 5:
-                for val in df[col].unique():
+                unique_categories = list(df[col].unique())
+                if ignore_first:
+                    unique_categories = unique_categories[1:]
+                for val in unique_categories:
                     df[f'{col}_{val}'] = (df[col] == val).astype(int)
                 df.drop(columns=[col], inplace=True)
             else:

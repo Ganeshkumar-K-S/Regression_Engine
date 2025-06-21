@@ -1,27 +1,26 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-export default function Attributes({ uploadedFile }) {
+export default function Attributes({ uploadedFile , uploadUUID}) {
   const [attributes, setAttributes] = useState(null);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    if (!uploadedFile || !uploadUUID) return;
+
+    const name = uploadUUID;
+    const extension = uploadedFile.name.split('.').pop().toLowerCase();
+
     const fetchAttributes = async () => {
-      if (!uploadedFile) return;
-
-      const name = 'data';
-      const extension = uploadedFile.name.split('.').pop().toLowerCase();
-
       try {
-        const res = await fetch(`http://localhost:5000/api/getattributes/${name}/${extension}`);
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text);
-        }
-
+        const res = await fetch(`http://localhost:5000/api/getattributes/${name}/${extension}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-        setAttributes(Object.keys(data)); // We only need keys
+        setAttributes(Object.keys(data));
         setError('');
       } catch (err) {
         setError('Failed to load attributes: ' + err.message);
@@ -30,7 +29,8 @@ export default function Attributes({ uploadedFile }) {
     };
 
     fetchAttributes();
-  }, [uploadedFile]);
+  }, [uploadedFile, uploadUUID]);
+
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -80,7 +80,7 @@ export default function Attributes({ uploadedFile }) {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-white p-3 text-sm-montserrat text-chrysler-blue-600 rounded border shadow cursor-grab hover:bg-chrysler-blue-100"
+                          className="bg-white p-3 text-sm-montserrat text-chrysler-blue-600 rounded border shadow cursor-grab hover:bg-gray-200"
                         >
                           {key}
                         </div>
