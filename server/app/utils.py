@@ -271,29 +271,45 @@ def get_attributes(df):
         res[col] = df[col].dtype == object
     return res
 
-def bayesian_target_encoding(df, target, feature, alpha=5):
-    overall_mean = df[target].mean()
-    agg = df.groupby(feature)[target].agg(['mean', 'count'])
+def bayesian_target_encoding(x, y, feature, alpha=5):
+    temp = pd.DataFrame({feature: x[feature], 'target': y})
+    overall_mean = y.mean()
+    agg = temp.groupby(feature)['target'].agg(['mean', 'count'])
     agg['encoded'] = (agg['mean'] * agg['count'] + overall_mean * alpha) / (agg['count'] + alpha)
-    return df[feature].map(agg['encoded'])
+    mapping = agg['encoded']
+    return x[feature].map(mapping), mapping
 
-def encoding(df, target, features, ignore_first=False):
-    for col in features:
-        if not pd.api.types.is_numeric_dtype(df[col]):
-            unique_vals = df[col].nunique()
+def encoding(y, x, ignore_first=False, bayes_mappings=None):
+    res = pd.DataFrame(index=x.index)
+    new_bayes_mappings = {} if bayes_mappings is None else bayes_mappings
+
+    for col in x.columns:
+        if pd.api.types.is_numeric_dtype(x[col]):
+            res[col] = x[col]
+
+        else:
+            unique_vals = x[col].nunique()
+
             if unique_vals == 1:
-                unique_val=df[col].unique()
-                df[col]=df[col].map({unique_val:1})
-            if  1 < unique_vals < 5:
-                unique_categories = list(df[col].unique())
+                unique_val = x[col].unique()[0]
+                res[col] = 1
+
+            elif 1 < unique_vals < 5:
+                unique_categories = list(x[col].unique())
                 if ignore_first:
                     unique_categories = unique_categories[1:]
                 for val in unique_categories:
-                    df[f'{col}_{val}'] = (df[col] == val).astype(int)
-                df.drop(columns=[col], inplace=True)
+                    res[f'{col}_{val}'] = (x[col] == val).astype(int)
+
             else:
-                df[col] = bayesian_target_encoding(df, target, col)
-    return df
+                if bayes_mappings is None:
+                    res[col], mapping = bayesian_target_encoding(x, y, col)
+                    new_bayes_mappings[col] = mapping
+                else:
+                    mapping = bayes_mappings[col]
+                    res[col] = x[col].map(mapping).fillna(mapping.mean()) 
+
+    return res, new_bayes_mappings
 
 def to_dataframe(filepath,format):
     if format=='json':
