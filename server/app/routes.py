@@ -12,8 +12,10 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            raise KeyError('uid not in session')
-        uid=session.get('uid')
+            session['uid']='u0001'
+        #     raise KeyError('uid not in session')
+        
+        uid=session.get('uid','123')
         print(uid)
         cache.cache[uid]={}
         cache.cache[uid]['uploads_path'] = os.path.join(upload_dir, f"{name}.{format}")
@@ -121,7 +123,7 @@ def get_target_feature():
     finally:
         return status
     
-@engine.route('/treat-null/<method>', methods=['POST'])
+@engine.route('/treat-null', methods=['POST'])
 def api_treat_null():
     status=200
     try:
@@ -139,11 +141,10 @@ def api_treat_null():
 
             cache.cache[uid]['df'] = utils.treat_null(cache.cache[uid]['df'], col_name, method, value)
 
-        return jsonify({'message': 'Null treatment applied successfully'}), 200 
+
+        return from_dataframe(cache.cache[uid]['df'],'json')
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        return status
 
     

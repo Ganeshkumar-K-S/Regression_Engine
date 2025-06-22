@@ -9,7 +9,7 @@ from statsmodels.stats.diagnostic import het_breuschpagan
 from scipy.stats import zscore
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
 
-def treat_null(df,col,method,value=[]):
+def treat_null(df,col,method,value=None):
     try:
         if method==1: #drop null values
             df.dropna(subset=[col],inplace=True)
@@ -23,7 +23,7 @@ def treat_null(df,col,method,value=[]):
                 or pd.api.types.is_datetime64_any_dtype(df[col]) and isinstance(value,datetime)):
                     raise ValueError("Value miss match in columns and given values")
             else:
-                    df[col]=df[col].fillna(value[0])
+                    df[col]=df[col].fillna(value)
 
         elif method==3: #forward fill
             df[col]=df[col].fillna(method='ffill')
