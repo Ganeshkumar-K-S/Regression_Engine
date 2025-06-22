@@ -13,38 +13,26 @@ export default function App() {
   const [target, setTarget] = useState(null);
   const [targetError, setTargetError] = useState('');
 
-  // Clear cache only on page refresh or exit
   useEffect(() => {
     const clearCache = () => {
-      // Use sendBeacon for reliability during page unload
       const blob = new Blob([], { type: 'application/json' });
       navigator.sendBeacon('http://localhost:5000/api/clearcache', blob);
     };
 
     const handleBeforeUnload = (e) => {
-      // This handles both refresh and window close
-      clearCache();
-    };
-
-    const handleVisibilityChange = () => {
-      // Only clear when page becomes hidden and user is likely leaving
-      if (document.visibilityState === 'hidden') {
+      // Only clear cache if still on localhost and not navigating away
+      if (window.location.hostname === 'localhost') {
         clearCache();
       }
     };
 
-    // Listen for page unload events (refresh, close, navigate away)
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    // Listen for visibility changes (tab switch, minimize, etc.)
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Cleanup listeners
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+
 
   return (
     <div className="bg-honeydew-900 min-h-screen">

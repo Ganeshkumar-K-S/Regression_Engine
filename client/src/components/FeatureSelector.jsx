@@ -113,16 +113,21 @@ export default function FeatureSelector({
         🎯 Feature and Target Selector
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-44">
-        {/* Features Grid */}
-        <div className="lg:col-span-2">
+      {/* Always keep features and target in same row with flexible layout */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Features Section - Takes up more space */}
+        <div className="flex-1 min-w-0">
           <h3 className="text-lg font-semibold mb-2 text-purple-700">Features</h3>
-          <Droppable droppableId="features" direction="horizontal">
-            {(provided) => (
+          <Droppable droppableId="features">
+            {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="border rounded-lg p-4 bg-gray-50 shadow-inner grid grid-cols-3 gap-4 min-h-[5rem]"
+                className={`border rounded-lg p-4 shadow-inner min-h-[5rem] flex flex-wrap gap-3 transition-colors duration-200 ${
+                  snapshot.isDraggingOver 
+                    ? 'bg-purple-100 border-purple-400' 
+                    : 'bg-gray-50 border-gray-300'
+                }`}
               >
                 {features.map((key, index) => (
                   <Draggable key={key} draggableId={key} index={index}>
@@ -137,10 +142,12 @@ export default function FeatureSelector({
                           {...provided.dragHandleProps}
                           onMouseEnter={() => handleFeatureMouseEnter(index, key)}
                           onMouseLeave={handleMouseLeave}
-                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab overflow-hidden 
-                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition-colors duration-200 relative"
+                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab 
+                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 
+                                     transition-colors duration-200 relative min-w-[120px] max-w-[200px]
+                                     flex items-center justify-center text-center"
                         >
-                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">
                             {key}
                           </span>
                           {removeButton(() => handleRemoveFeature(key))}
@@ -155,20 +162,24 @@ export default function FeatureSelector({
           </Droppable>
         </div>
 
-        {/* Target Grid */}
-        <div>
+        {/* Target Section - Fixed width */}
+        <div className="w-full md:w-64 flex-shrink-0">
           <h3 className="text-lg font-semibold mb-2 text-purple-700">Target</h3>
-          <Droppable droppableId="target" direction="horizontal">
-            {(provided) => (
+          <Droppable droppableId="target">
+            {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="border rounded-lg p-4 bg-gray-50 shadow-inner grid grid-cols-1 gap-4 min-h-[5rem]"
+                className={`border rounded-lg p-4 shadow-inner min-h-[5rem] flex items-center justify-center transition-colors duration-200 ${
+                  snapshot.isDraggingOver 
+                    ? 'bg-purple-100 border-purple-400' 
+                    : 'bg-gray-50 border-gray-300'
+                }`}
               >
-                {target && (
+                {target ? (
                   <Draggable draggableId={target} index={0}>
                     {(provided) => (
-                      <div className="relative group">
+                      <div className="relative group w-full">
                         <div
                           ref={(el) => {
                             provided.innerRef(el);
@@ -178,10 +189,11 @@ export default function FeatureSelector({
                           {...provided.dragHandleProps}
                           onMouseEnter={() => handleTargetMouseEnter(target)}
                           onMouseLeave={handleMouseLeave}
-                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab overflow-hidden 
-                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition-colors duration-200 relative"
+                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab 
+                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 
+                                     transition-colors duration-200 relative text-center"
                         >
-                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">
                             {target}
                           </span>
                           {removeButton(handleRemoveTarget)}
@@ -189,7 +201,7 @@ export default function FeatureSelector({
                       </div>
                     )}
                   </Draggable>
-                )}
+                ) : null}
                 {provided.placeholder}
               </div>
             )}
