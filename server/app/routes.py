@@ -1,6 +1,7 @@
 import os
 from flask import Blueprint, request, jsonify, current_app,session
-from app.utils import get_attributes,to_dataframe,from_dataframe,encoding
+from app.utils import get_attributes,to_dataframe,from_dataframe
+from app.regression import Model
 import app.cache as cache
 import app.utils as utils
 import uuid
@@ -178,13 +179,12 @@ def api_treat_null():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@engine.route('/getencode')
-def get_encode():
-    try:
+@engine.route('/makemodel',methods=['GET'])
+def make_model():
+    try: 
         if 'uid' not in session:
-            raise KeyError('Uid is not in the session')
+                raise KeyError('Uid is not in the session')
         uid=session.get("uid")
-
         if uid not in cache.cache:
             raise KeyError('Uid not in cache')
 
@@ -194,13 +194,11 @@ def get_encode():
             raise KeyError('Target not in session')
         if 'df' not in cache.cache[uid]:
             raise KeyError("dataframe is not in cache")
-        
         target=cache.cache[uid]['target']
         feature=cache.cache[uid]['feature']
-        cache.cache[uid]['df']= cache.cache[uid]['df'][[target] + feature]
-        cache.cache[uid]['df']=encoding(cache.cache[uid]['df'],target,feature,ignore_first=True)
-        return from_dataframe(cache.cache[uid]['df'],"json")
-    
+        df=cache.cache[uid]['df']
+        cache.cache[uid]['model']=Model(df,target=target,features=feature)
+
+        return jsonify({"message" : "model created successfully"}),200
     except Exception as e:
-        return jsonify({"error":str(e)})
-    
+        return jsonify({"Error":str(e)})
