@@ -268,7 +268,7 @@ def get_category_vars(df):
 def get_attributes(df):
     res = {}
     for col in df.columns:
-        res[col] = df[col].dtype == object
+        res[col] = pd.api.types.is_numeric_dtype(df[col])
     return res
 
 def bayesian_target_encoding(x, y, feature, alpha=5):

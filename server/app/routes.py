@@ -75,7 +75,7 @@ def upload_file():
         print(e)
         return jsonify({'error': str(e)}), 501
 
-@engine.delete('/clearcache')
+@engine.route('/clearcache', methods=['POST', 'DELETE'])
 def clear_cache():
     try:
         if 'uid' not in session:
@@ -107,6 +107,8 @@ def clear_cache():
     
 @engine.post('/gettargetfeature')
 def get_target_feature():
+    uid=session.get('uid')
+    print(uid)
     try:
         response=request.get_json()
         if 'uid' not in session:
@@ -119,6 +121,34 @@ def get_target_feature():
         cache.cache[uid]['target']=response['target']
         cache.cache[uid]['feature']=response['feature']
         return jsonify(response)
+    except Exception as e:
+        return jsonify({"error":str(e)})
+    
+@engine.route('/getnull',methods=['GET'])
+def send_null_attributes():
+    res={}
+    try:
+        if 'uid' not in session:
+            raise KeyError('uid not in session')
+        uid=session.get('uid')
+
+        if 'feature' not in cache.cache[uid]:
+            raise KeyError('feature not in the session')
+        if 'target' not in cache.cache[uid]:
+            raise KeyError('Target not in session')
+        if 'df' not in cache.cache[uid]:
+            raise KeyError("dataframe is not in cache")
+        
+        target=cache.cache[uid]['target']
+        feature=cache.cache[uid]['feature']
+        cache.cache[uid]['df']= cache.cache[uid]['df'][[target] + feature]
+        df=cache.cache[uid]['df']
+        for col in df.columns:
+            count= df[col].isna().sum()
+            if count > 0:
+                res[col]=int(count)
+        print(res)
+        return jsonify(res)
     except Exception as e:
         return jsonify({"error":str(e)})
     

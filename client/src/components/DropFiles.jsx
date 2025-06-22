@@ -183,7 +183,7 @@ export default function DropFiles({ uploadedFile, setUploadedFile, uploadUUID, s
                 </div>
                 <button
                   type="button"
-                  className="btn btn-sm btn-circle btn-ghost"
+                  className="btn btn-sm btn-circle btn-ghost cursor-pointer"
                   onClick={removeFile}
                 >
                   <TrashIcon className="w-5 h-5 text-red-500" />
