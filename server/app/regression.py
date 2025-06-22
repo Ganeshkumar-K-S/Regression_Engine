@@ -1,8 +1,8 @@
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error as mae, mean_squared_error as mse, r2_score as r2
-from app.utils import encoding
 import numpy as np
+from app.utils import preprocess_onehot, bayesian_target_encoding
 
 class Model:
     def __init__(self, df, target, features, test_size=0.2, random_state=42):
@@ -14,16 +14,26 @@ class Model:
         self.X = df[self.features]
         self.y = df[self.target]
 
+        self.X_encoded, self.bayes_features, self.onehot_mapping = preprocess_onehot(self.X)
+
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X, self.y, test_size=test_size, random_state=random_state
+            self.X_encoded, self.y, test_size=test_size, random_state=random_state
         )
 
-        self.X_train_encoded, self.bayes_mappings = encoding(self.y_train, self.X_train)
-        self.X_test_encoded, _ = encoding(self.y_test, self.X_test, bayes_mappings=self.bayes_mappings)
-        self.X_train_encoded = sm.add_constant(self.X_train_encoded)
-        self.X_test_encoded = sm.add_constant(self.X_test_encoded)
+        self.bayes_mappings = {}
+        for col in self.bayes_features:
+            x_train_raw = self.X.loc[self.X_train.index, col]
+            x_test_raw = self.X.loc[self.X_test.index, col]
+            encoded_train, mapping = bayesian_target_encoding(x_train_raw, self.y_train, col)
+            encoded_test = x_test_raw.map(mapping).fillna(mapping.mean())
+            self.X_train[col] = encoded_train
+            self.X_test[col] = encoded_test
+            self.bayes_mappings[col] = mapping
 
-        self.__model = sm.OLS(self.y_train, self.X_train_encoded).fit()
+        self.X_train = sm.add_constant(self.X_train)
+        self.X_test = sm.add_constant(self.X_test)
+
+        self.__model = sm.OLS(self.y_train, self.X_train).fit()
 
     def getModel(self):
         return self.__model
@@ -32,7 +42,7 @@ class Model:
         self.__model = new_model
 
     def getMetrics(self):
-        y_pred = self.__model.predict(self.X_test_encoded)
+        y_pred = self.__model.predict(self.X_test)
         mae_val = mae(self.y_test, y_pred)
         mse_val = mse(self.y_test, y_pred)
         rmse_val = np.sqrt(mse_val)
@@ -47,3 +57,9 @@ class Model:
             'R2': r2_val,
             'adjusted_R2': adj_r2_val
         }
+
+    def getBayesMappings(self):
+        return self.bayes_mappings
+    
+    def getOneHotMappings(self):
+        return self.onehot_mapping

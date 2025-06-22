@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from statsmodels.stats.diagnostic import het_breuschpagan
 from scipy.stats import zscore
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def treat_null(df,col,method,value=None):
     try:
@@ -271,46 +273,6 @@ def get_attributes(df):
         res[col] = pd.api.types.is_numeric_dtype(df[col])
     return res
 
-def bayesian_target_encoding(x, y, feature, alpha=5):
-    temp = pd.DataFrame({feature: x[feature], 'target': y})
-    overall_mean = y.mean()
-    agg = temp.groupby(feature)['target'].agg(['mean', 'count'])
-    agg['encoded'] = (agg['mean'] * agg['count'] + overall_mean * alpha) / (agg['count'] + alpha)
-    mapping = agg['encoded']
-    return x[feature].map(mapping), mapping
-
-def encoding(y, x, ignore_first=False, bayes_mappings=None):
-    res = pd.DataFrame(index=x.index)
-    new_bayes_mappings = {} if bayes_mappings is None else bayes_mappings
-
-    for col in x.columns:
-        if pd.api.types.is_numeric_dtype(x[col]):
-            res[col] = x[col]
-
-        else:
-            unique_vals = x[col].nunique()
-
-            if unique_vals == 1:
-                unique_val = x[col].unique()[0]
-                res[col] = 1
-
-            elif 1 < unique_vals < 5:
-                unique_categories = list(x[col].unique())
-                if ignore_first:
-                    unique_categories = unique_categories[1:]
-                for val in unique_categories:
-                    res[f'{col}_{val}'] = (x[col] == val).astype(int)
-
-            else:
-                if bayes_mappings is None:
-                    res[col], mapping = bayesian_target_encoding(x, y, col)
-                    new_bayes_mappings[col] = mapping
-                else:
-                    mapping = bayes_mappings[col]
-                    res[col] = x[col].map(mapping).fillna(mapping.mean()) 
-
-    return res, new_bayes_mappings
-
 def to_dataframe(filepath,format):
     if format=='json':
         return pd.read_json(filepath)
@@ -322,5 +284,36 @@ def from_dataframe(df,format):
         return df.to_json(orient='records')
     else:
         return df.to_csv('data.csv')
-    
-    
+
+def bayesian_target_encoding(x, y, feature, alpha=5):
+    temp = pd.DataFrame({feature: x, 'target': y})
+    overall_mean = y.mean()
+    agg = temp.groupby(feature)['target'].agg(['mean', 'count'])
+    agg['encoded'] = (agg['mean'] * agg['count'] + overall_mean * alpha) / (agg['count'] + alpha)
+    mapping = agg['encoded']
+    return x.map(mapping), mapping
+
+def preprocess_onehot(x, ignore_first=False):
+    res = pd.DataFrame(index=x.index)
+    onehot_mapping = {}
+    high_cardinality_cols = []
+
+    for col in x.columns:
+        if pd.api.types.is_numeric_dtype(x[col]):
+            res[col] = x[col]
+        else:
+            unique_vals = x[col].nunique()
+            if unique_vals == 1:
+                res[col] = 1
+                onehot_mapping[col] = list(x[col].unique())
+            elif 1 < unique_vals < 10:
+                unique_categories = list(x[col].unique())
+                onehot_mapping[col] = unique_categories
+                if ignore_first:
+                    unique_categories = unique_categories[1:]
+                for val in unique_categories:
+                    res[f'{col}_{val}'] = (x[col] == val).astype(int)
+            else:
+                high_cardinality_cols.append(col)
+
+    return res, high_cardinality_cols, onehot_mapping
