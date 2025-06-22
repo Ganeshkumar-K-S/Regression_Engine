@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import DropFiles from './components/DropFiles';
-import DragDropWrapper from './components/DragDropWrapper';
-
+import DragDropWrapper from './components/DragDropWrapper'; 
 import './index.css';
 
 export default function App() {
@@ -13,17 +12,32 @@ export default function App() {
   const [target, setTarget] = useState(null);
   const [targetError, setTargetError] = useState('');
 
+ 
+  // Clear cache on initial load (via fetch DELETE)
   useEffect(() => {
-    // Only clear cache on beforeunload (most reliable)
-    const handleBeforeUnload = () => {
-      // Use sendBeacon for reliability during page unload
+    fetch('http://localhost:5000/api/clearcache', {
+      method: 'DELETE',
+      credentials: 'include',
+    }).catch((err) => console.error('Cache clear error:', err));
+  }, []);
+
+  // Clear cache on page unload (via POST sendBeacon)
+  useEffect(() => {
+    const handleUnload = () => {
+      const blob = new Blob([], { type: 'application/json' });
       navigator.sendBeacon('http://localhost:5000/api/clearcache');
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        handleUnload();
+      }
+    });
 
+    window.addEventListener('unload', handleUnload);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+      document.removeEventListener('visibilitychange', handleUnload);
     };
   }, []);
 
@@ -36,7 +50,7 @@ export default function App() {
         uploadUUID={uploadUUID}
         setUploadUUID={setUploadUUID}
       />
-      
+
       <DragDropWrapper
         uploadedFile={uploadedFile}
         uploadUUID={uploadUUID}
