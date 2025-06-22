@@ -105,7 +105,7 @@ def clear_cache():
         print(e)
         return jsonify({'error': str(e)}), 500
     
-@engine.post('/gettargetfeature')
+@engine.route('/gettargetfeature', methods=['POST'])
 def get_target_feature():
     uid=session.get('uid')
     print(uid)

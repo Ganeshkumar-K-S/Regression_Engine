@@ -40,6 +40,7 @@ export default function DragDropWrapper({
     if (dest === 'target') {
       if (attributes[draggableId] === true) {
         setTarget(draggableId);
+        setFeatures((prev) => prev.filter((f) => f !== draggableId));
         setTargetError('');
       } else {
         setTargetError('❌ Target attribute must be Numerical');

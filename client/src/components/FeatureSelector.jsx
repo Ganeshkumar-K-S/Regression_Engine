@@ -25,56 +25,87 @@ export default function FeatureSelector({
 
   const handleFeatureMouseEnter = (index, key) => {
     const el = featureRefs.current[index];
-    if (el) {
-      showTooltip(el, key);
-    }
+    if (el) showTooltip(el, key);
   };
 
   const handleTargetMouseEnter = (key) => {
     const el = targetRef.current;
-    if (el) {
-      showTooltip(el, key);
-    }
+    if (el) showTooltip(el, key);
   };
 
-  const handleMouseLeave = () => {
-    hideTooltip();
+  const handleMouseLeave = () => hideTooltip();
+
+  const handleRemoveFeature = (key) => {
+    setFeatures((prev) => prev.filter((item) => item !== key));
+  };
+
+  const handleRemoveTarget = () => {
+    setTarget('');
   };
 
   const handleStart = async () => {
     try {
-      // Step 1: POST to /gettargetfeature
       const targetFeatureResponse = await fetch('http://localhost:5000/api/gettargetfeature', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({ target, feature: features })
+        credentials: 'include', // Important for sessions
+        body: JSON.stringify({ target, feature: features }),
       });
+
+      if (!targetFeatureResponse.ok) {
+        throw new Error(`HTTP error! status: ${targetFeatureResponse.status}`);
+      }
 
       const targetFeatureData = await targetFeatureResponse.json();
       if (targetFeatureData.error) {
-        console.error('Error from /gettargetfeature:', targetFeatureData.error);
         setTargetError(targetFeatureData.error);
         return;
       }
 
-      // Step 2: GET from /getnull
-      const nullResponse = await fetch('http://localhost:5000/api/getnull');
+      const nullResponse = await fetch('http://localhost:5000/api/getnull', {
+        credentials: 'include' // Important for sessions
+      });
+      
+      if (!nullResponse.ok) {
+        throw new Error(`HTTP error! status: ${nullResponse.status}`);
+      }
+
       const nullData = await nullResponse.json();
 
       if (nullData.error) {
-        console.error('Error from /getnull:', nullData.error);
         setTargetError(nullData.error);
       } else {
-        console.log('Null attributes:', nullData);
-        setNullAttributes(nullData); // You can use this data to show in UI
+        setNullAttributes(nullData);
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      setTargetError('An unexpected error occurred');
+      setTargetError(`An unexpected error occurred: ${err.message}`);
     }
   };
+
+  const removeButton = (onClickHandler) => (
+    <button
+      type="button"
+      onClick={onClickHandler}
+      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 inline-flex items-center justify-center text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-400"
+      title="Remove"
+    >
+      <span className="sr-only">Remove</span>
+      <svg
+        className="h-3 w-3"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  );
 
   return (
     <div className="p-6 max-w-6xl mx-auto font-montserrat relative">
@@ -107,11 +138,12 @@ export default function FeatureSelector({
                           onMouseEnter={() => handleFeatureMouseEnter(index, key)}
                           onMouseLeave={handleMouseLeave}
                           className="p-3 text-sm-montserrat rounded border shadow cursor-grab overflow-hidden 
-                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition-colors duration-200"
+                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition-colors duration-200 relative"
                         >
                           <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
                             {key}
                           </span>
+                          {removeButton(() => handleRemoveFeature(key))}
                         </div>
                       </div>
                     )}
@@ -147,11 +179,12 @@ export default function FeatureSelector({
                           onMouseEnter={() => handleTargetMouseEnter(target)}
                           onMouseLeave={handleMouseLeave}
                           className="p-3 text-sm-montserrat rounded border shadow cursor-grab overflow-hidden 
-                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition-colors duration-200"
+                                     bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition-colors duration-200 relative"
                         >
                           <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
                             {target}
                           </span>
+                          {removeButton(handleRemoveTarget)}
                         </div>
                       </div>
                     )}
@@ -161,7 +194,6 @@ export default function FeatureSelector({
               </div>
             )}
           </Droppable>
-
           {targetError && (
             <p className="mt-2 text-sm text-red-600 font-medium">{targetError}</p>
           )}

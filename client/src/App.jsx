@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import DropFiles from './components/DropFiles';
-import DragDropWrapper from './components/DragDropWrapper'; 
+import DragDropWrapper from './components/DragDropWrapper';
+
 import './index.css';
 
 export default function App() {
@@ -12,32 +13,36 @@ export default function App() {
   const [target, setTarget] = useState(null);
   const [targetError, setTargetError] = useState('');
 
- 
-  // Clear cache on initial load (via fetch DELETE)
+  // Clear cache only on page refresh or exit
   useEffect(() => {
-    fetch('http://localhost:5000/api/clearcache', {
-      method: 'DELETE',
-      credentials: 'include',
-    }).catch((err) => console.error('Cache clear error:', err));
-  }, []);
-
-  // Clear cache on page unload (via POST sendBeacon)
-  useEffect(() => {
-    const handleUnload = () => {
+    const clearCache = () => {
+      // Use sendBeacon for reliability during page unload
       const blob = new Blob([], { type: 'application/json' });
-      navigator.sendBeacon('http://localhost:5000/api/clearcache');
+      navigator.sendBeacon('http://localhost:5000/api/clearcache', blob);
     };
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        handleUnload();
-      }
-    });
+    const handleBeforeUnload = (e) => {
+      // This handles both refresh and window close
+      clearCache();
+    };
 
-    window.addEventListener('unload', handleUnload);
+    const handleVisibilityChange = () => {
+      // Only clear when page becomes hidden and user is likely leaving
+      if (document.visibilityState === 'hidden') {
+        clearCache();
+      }
+    };
+
+    // Listen for page unload events (refresh, close, navigate away)
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Listen for visibility changes (tab switch, minimize, etc.)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup listeners
     return () => {
-      window.removeEventListener('unload', handleUnload);
-      document.removeEventListener('visibilitychange', handleUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
