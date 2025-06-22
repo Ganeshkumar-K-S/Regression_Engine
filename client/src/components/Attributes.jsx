@@ -2,7 +2,8 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import useTooltip from '../hooks/useTooltip.jsx';
 
-export default function Attributes({ uploadedFile, uploadUUID, attributes, setAttributes }) {
+export default function Attributes({ uploadedFile, uploadUUID, attributes, setAttributes, features, target, isLocked }) {
+
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const refs = useRef([]);
@@ -41,21 +42,24 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
 
   const filteredAttributes = useMemo(() => {
     if (!attributes || typeof attributes !== 'object') return [];
-    return Object.keys(attributes).filter(attr =>
-      attr.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [attributes, search]);
+
+    const used = new Set([...(features || []), target]);
+
+    return Object.keys(attributes)
+      .filter(attr =>
+        attr.toLowerCase().includes(search.toLowerCase()) && !used.has(attr)
+      );
+  }, [attributes, search, features, target]);
+
 
   const handleMouseEnter = (index, key) => {
     const el = refs.current[index];
-    console.log('Mouse enter:', key, el); // Debug log
     if (el) {
       showTooltip(el, key);
     }
   };
 
   const handleMouseLeave = () => {
-    console.log('Mouse leave'); // Debug log
     hideTooltip();
   };
 
@@ -77,7 +81,7 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
 
       <Tooltip />
 
-      <Droppable droppableId="attribute-source" isDropDisabled={true}>
+      <Droppable droppableId="attributes" isDropDisabled={true} isCombineEnabled={false} isDragDisabled={isLocked}>
         {(provided) => (
           <div
             ref={provided.innerRef}
@@ -85,7 +89,7 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
             className="border rounded-lg p-4 bg-gray-50 shadow-inner max-h-64 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
           >
             {filteredAttributes.map((key, index) => (
-              <Draggable key={key} draggableId={key} index={index}>
+              <Draggable key={key} draggableId={key} index={index} isDragDisabled={isLocked}>
                 {(provided) => (
                   <div className="relative group">
                     <div

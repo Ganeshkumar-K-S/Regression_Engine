@@ -4,6 +4,7 @@ import DropFiles from './components/DropFiles';
 import DragDropWrapper from './components/DragDropWrapper';
 
 import './index.css';
+import NullHandling from './components/NullHandling';
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -12,6 +13,7 @@ export default function App() {
   const [features, setFeatures] = useState([]);
   const [target, setTarget] = useState(null);
   const [targetError, setTargetError] = useState('');
+  const [nullAttributes, setNullAttributes] = useState({});
 
   useEffect(() => {
     const clearCache = () => {
@@ -55,7 +57,15 @@ export default function App() {
         setTarget={setTarget}
         targetError={targetError}
         setTargetError={setTargetError}
+        nullAttributes={nullAttributes}
+        setNullAttributes={setNullAttributes}
       />
+      {Object.keys(attributes).length > 0 && Object.keys(nullAttributes).length > 0 && (
+        <NullHandling
+          nullAttributes={Object.entries(nullAttributes)}
+          attributes={attributes}
+        />
+      )}
     </div>
   );
 }

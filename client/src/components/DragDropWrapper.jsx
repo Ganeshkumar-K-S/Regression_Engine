@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect , useState } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import Attributes from './Attributes';
 import FeatureSelector from './FeatureSelector';
@@ -14,8 +14,13 @@ export default function DragDropWrapper({
   setTarget,
   targetError,
   setTargetError,
+  nullAttributes,
+  setNullAttributes
 }) {
-  // Clear everything when file is removed
+  const [isLocked, setIsLocked] = useState(false);
+
+
+  // Clear state on file removal
   useEffect(() => {
     if (!uploadedFile || !uploadUUID) {
       setAttributes({});
@@ -24,12 +29,19 @@ export default function DragDropWrapper({
     }
   }, [uploadedFile, uploadUUID, setAttributes, setFeatures, setTarget]);
 
-  // Handle drag end logic
   const onDragEnd = (result) => {
-    const { destination, draggableId } = result;
+    const { source, destination, draggableId } = result;
     if (!destination) return;
 
     const dest = destination.droppableId;
+
+    // Prevent re-dragging into same place
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
 
     if (dest === 'features') {
       if (!features.includes(draggableId) && draggableId !== target) {
@@ -38,7 +50,8 @@ export default function DragDropWrapper({
     }
 
     if (dest === 'target') {
-      if (attributes[draggableId] === true) {
+      const isNumerical = attributes[draggableId]; // boolean expected from backend
+      if (isNumerical === true) {
         setTarget(draggableId);
         setFeatures((prev) => prev.filter((f) => f !== draggableId));
         setTargetError('');
@@ -55,7 +68,11 @@ export default function DragDropWrapper({
         uploadUUID={uploadUUID}
         attributes={attributes}
         setAttributes={setAttributes}
+        features={features}
+        target={target}
+        isLocked={isLocked}
       />
+
       {Object.keys(attributes).length > 0 && (
         <FeatureSelector
           attributes={attributes}
@@ -65,6 +82,10 @@ export default function DragDropWrapper({
           setTarget={setTarget}
           targetError={targetError}
           setTargetError={setTargetError}
+          nullAttributes={nullAttributes}
+          setNullAttributes={setNullAttributes}
+          isLocked={isLocked}
+          setIsLocked={setIsLocked}
         />
       )}
     </DragDropContext>

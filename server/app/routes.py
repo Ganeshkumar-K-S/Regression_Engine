@@ -157,12 +157,12 @@ def send_null_attributes():
     
 @engine.route('/treat-null', methods=['POST'])
 def api_treat_null():
-    status=200
     try:
         response = request.get_json()
         if 'uid' not in session:
-            raise KeyError('uid not in session')
-        uid=session.get('uid')
+            return jsonify({'error': 'uid not in session'}), 401
+
+        uid = session.get('uid')
 
         for col_name, config in response.items():
             method = config.get('method')
@@ -171,10 +171,12 @@ def api_treat_null():
             if method is None:
                 return jsonify({'error': f'Method missing for column "{col_name}"'}), 400
 
-            cache.cache[uid]['df'] = utils.treat_null(cache.cache[uid]['df'], col_name, method, value)
+            # Apply treatment
+            cache.cache[uid]['df'] = utils.treat_null(
+                cache.cache[uid]['df'], col_name, method, value
+            )
 
-
-        return from_dataframe(cache.cache[uid]['df'],'json')
+        return jsonify({'message': 'Null treatment applied successfully'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

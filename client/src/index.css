@@ -97,14 +97,3 @@
   }
 }
 
-.tooltip-arrow {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid var(--color-chrysler-blue-600);
-}
