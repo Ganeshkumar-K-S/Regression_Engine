@@ -319,7 +319,60 @@ def preprocess_onehot(x, ignore_first=False):
 
     return res, high_cardinality_cols, onehot_mapping
 
-def plot_residual_histogram(residuals, uid):
+
+def visualize_linearity(uid, df, target, features):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+
+    for feature in features:
+        plt.figure(figsize=(6, 4))
+        sns.regplot(data=df, 
+                    x=feature, 
+                    y=target,
+                    scatter_kws={'color': "#a86de7", 'alpha': 0.5},  
+                    line_kws={'color': '#7604f1', 'alpha': 1.0} )
+        plt.title(f'{feature} vs {target}', fontproperties=font_prop)
+        plt.xlabel(feature, fontproperties=font_prop)
+        plt.ylabel(target, fontproperties=font_prop)
+        ax = plt.gca()
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontproperties(font_prop)
+        plt.tight_layout()
+        save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_1')
+        os.makedirs(save_dir, exist_ok=True)
+
+        filename = f"{uid}plots/{feature}vs{target}.jpeg"
+        plt.savefig(filename, dpi=300)
+        plt.close() 
+
+def visualize_independence_error(uid, y_pred, residuals):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+
+    plt.figure(figsize=(6, 4))
+    sns.regplot( x=y_pred, 
+                y=residuals,
+                scatter_kws={'color': "#a86de7", 'alpha': 0.5})
+    plt.axhline(0, linestyle='--', color='#7604f1', linewidth=1)
+    plt.title("Residuals vs Fitted Values (Check Error Independence)", fontproperties=font_prop)
+    plt.xlabel("Fitted value", fontproperties=font_prop)
+    plt.ylabel("Residuals", fontproperties=font_prop)
+    ax = plt.gca()
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(font_prop)
+    plt.tight_layout()
+    save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_2')
+    os.makedirs(save_dir, exist_ok=True)
+
+    filename = f"{uid}.jpeg"
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+def plot_residual_histogram(uid,residuals):
     base_dir = os.path.abspath(os.path.dirname(__file__))
     font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
     font_prop = font_manager.FontProperties(fname=font_path)
@@ -343,3 +396,46 @@ def plot_residual_histogram(residuals, uid):
     plt.savefig(filename, dpi=300)
     plt.close()
 
+
+def plot_correlation_heatmap(uid, df, features):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+    plt.figure(figsize=(8, 6))
+    corr_matrix = df[features].corr()
+    sns.heatmap(corr_matrix, annot=True, cmap='crest', center=0)
+    plt.title("Correlation Matrix (Check Multicollinearity)",fontproperties=font_prop)
+    ax = plt.gca()
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(font_prop)
+    plt.tight_layout()
+    save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_4')
+    os.makedirs(save_dir, exist_ok=True)
+
+    filename = os.path.join(save_dir, f'{uid}.jpeg')
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+def plot_equal_variance(uid,y_pred, residuals):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+    plt.figure(figsize=(6, 4))
+    sns.scatterplot(x=y_pred, y=residuals, color='#a86de7', alpha=0.6)
+    plt.axhline(0, color='#7604f1', linestyle='--', linewidth=1)
+    plt.title("Residuals vs Fitted Values (Check Equal Variance)", fontproperties=font_prop)
+    plt.xlabel("Fitted Values (Predicted)", fontproperties=font_prop)
+    plt.ylabel("Residuals (y - ŷ)", fontproperties=font_prop)
+    ax = plt.gca()
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(font_prop)
+
+    plt.tight_layout()
+    save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_5')
+    os.makedirs(save_dir, exist_ok=True)
+
+    filename = os.path.join(save_dir, f'{uid}.jpeg')
+    plt.savefig(filename, dpi=300)
+    plt.color()
