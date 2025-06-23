@@ -6,6 +6,7 @@ import app.cache as cache
 import app.utils as utils
 import numpy as np
 import uuid
+import pandas as pd
 
 engine = Blueprint('engine', __name__)
 
@@ -217,7 +218,8 @@ def api_treat_outliers():
             session['uid']='u0001'
       
         uid = session.get('uid')
-        features=cache.cache[uid]['feature']
+        raw_features=cache.cache[uid]['feature']
+        features = [f for f in raw_features if pd.api.types.is_numeric_dtype(df[f])]
         cache.cache[uid]['df'] = utils.treat_outliers(
                 cache.cache[uid]['df'],  2, features
             )

@@ -89,7 +89,7 @@ def treat_outliers(df, method, features,model=None):
                 outlier_indices.update(outliers_in_col)
 
             outliers = list(outlier_indices)
-
+            print(len(outliers))
         elif method == 3:
             # Z-score method
             zscores = df.select_dtypes(include=[np.number]).apply(zscore)
