@@ -97,10 +97,7 @@ def outliers(df, method, features,model=None):
         print("ValueError:", e)
         outliers = []
 
-    return {
-        'outlier': outliers,
-        'outlier_percentage': (len(outliers) / df.shape[0]) * 100
-    }
+    return df.drop(index=outliers).reset_index(drop=True)
 
 
 def get_correlation_matrix(df,target,feature):
