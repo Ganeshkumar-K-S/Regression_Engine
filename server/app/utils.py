@@ -10,6 +10,10 @@ from scipy.stats import zscore
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib import font_manager
+import os
+import matplotlib
+matplotlib.use('Agg')
 
 def treat_null(df,col,method,value=None):
     try:
@@ -317,3 +321,28 @@ def preprocess_onehot(x, ignore_first=False):
                 high_cardinality_cols.append(col)
 
     return res, high_cardinality_cols, onehot_mapping
+
+def plot_residual_histogram(residuals, uid):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+    plt.figure(figsize=(6, 4))
+    sns.histplot(residuals, kde=True, color="#a86de7")
+    plt.title("Histogram of Residuals (Normality Check)")
+    plt.xlabel("Residuals")
+    plt.ylabel("Frequency")
+    plt.axvline(0, linestyle='--', color='#7604f1')
+
+    ax = plt.gca()
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(font_prop)
+
+    plt.tight_layout()
+    save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_3')
+    os.makedirs(save_dir, exist_ok=True)
+
+    filename = os.path.join(save_dir, f'{uid}.jpeg')
+    plt.savefig(filename, dpi=300)
+    plt.close()
+

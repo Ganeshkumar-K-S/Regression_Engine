@@ -160,7 +160,7 @@ def api_treat_null():
     try:
         response = request.get_json()
         if 'uid' not in session:
-            return jsonify({'error': 'uid not in session'}), 401
+            session['uid']='u0001'
 
         uid = session.get('uid')
 
@@ -185,7 +185,8 @@ def api_treat_null():
 def make_model():
     try: 
         if 'uid' not in session:
-                raise KeyError('Uid is not in the session')
+                # raise KeyError('Uid is not in the session')
+                session['uid']='u0001'
         uid=session.get("uid")
         if uid not in cache.cache:
             raise KeyError('Uid not in cache')
@@ -202,5 +203,24 @@ def make_model():
         cache.cache[uid]['model']=Model(df,target=target,features=feature)
 
         return jsonify({"message" : "model created successfully"}),200
+    except Exception as e:
+        return jsonify({"Error":str(e)})
+    
+
+@engine.route('/normality_of_errors')
+def api_normality_of_errors():
+    try:
+        if 'uid' not in session:
+                raise KeyError('Uid is not in the session')
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        
+        test_result=utils.normality_of_errors_test(cache.cache[uid]['model'].getModel())
+        utils.plot_residual_histogram(cache.cache[uid]['model'].getModel().resid,uid)
+        return jsonify(test_result)
     except Exception as e:
         return jsonify({"Error":str(e)})
