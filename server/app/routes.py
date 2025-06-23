@@ -252,10 +252,10 @@ def api_assumptions():
         utils.visualize_linearity(uid, df, target, feature)
 
         #assumption 2
-
         test_result_2=utils.visualize_independence_error(uid, y_pred, residuals)
         print(test_result_2)
         utils.visualize_independence_error(uid, y_pred, residuals)
+        
         # assumption - 3
         test_result_3=utils.normality_of_errors_test(model.getModel())
         
