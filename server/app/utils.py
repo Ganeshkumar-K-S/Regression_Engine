@@ -118,7 +118,9 @@ def get_correlation_feature(df,target,feature):
 #assumption-1 Linearity of feature-target relationship
 def linearity_test(df,target,feature):
     failed=[]
+    print("Success")
     res=get_correlation_feature(df,target,feature)
+    print(res)
     for key,value in res.items():
         if abs(value) < 0.1:
             failed.append(key)
@@ -144,7 +146,7 @@ def independence_of_errors_test(model):
 def normality_of_errors_test(model):
     stat,p=jb(model.resid)
     return {
-        'result':'success' if 0.05 <= p <0.05 else 'failure',
+        'result':'success' if p > 0.05 else 'failure',
         'test_val_jb':p
     }
 

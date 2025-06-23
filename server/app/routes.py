@@ -246,24 +246,25 @@ def api_assumptions():
         y_pred = model.getModel().predict(model.X_test)
         residuals = model.y_test - y_pred
 
-        #assumption 1
-        test_result_1=utils.linearity_test(df,target,feature)
-        print(test_result_1)
-        utils.visualize_linearity(uid, df, target, feature)
+        y_pred = np.array(y_pred, dtype=np.float64)
+        residuals = np.array(residuals, dtype=np.float64)
+
+        # #assumption 1
+        print(target)
+        test_result_1=utils.linearity_test(df,list(model.X_train.columns),target)
+        
+        utils.visualize_linearity(uid, df, list(model.X_train.columns), target)
+        print("Running linearity_test...")
 
         #assumption 2
-        test_result_2=utils.visualize_independence_error(uid, y_pred, residuals)
+        test_result_2=utils.independence_of_errors_test(model.getModel())
         print(test_result_2)
         utils.visualize_independence_error(uid, y_pred, residuals)
 
         fix_ind=(test_result_2['result']=='failure')
         
         # assumption - 3
-        test_result_3=utils.normality_of_errors_test(model.getModel())
-        
-
-        y_pred = np.array(y_pred, dtype=np.float64)
-        residuals = np.array(residuals, dtype=np.float64)
+        test_result_3=utils.normality_of_errors_test(model.getModel())    
 
         utils.plot_equal_variance(uid, y_pred, residuals)
 
@@ -290,8 +291,15 @@ def api_assumptions():
         elif target_transform:
             model.setModel(generateModel(model.y_train,model.X_train))
             
-
-        return jsonify(test_result_1)
+        
+        res={
+            "assumption_1":test_result_1,
+            "assumption_2":test_result_2,
+            "assumption_3":test_result_3,
+            "assumption_4":test_result_4,
+            "assumption_6":test_result_5
+        }
+        return jsonify(res)
         
     except Exception as e:
         return jsonify({"Error":str(e)})
