@@ -205,7 +205,7 @@ def make_model():
         feature=cache.cache[uid]['feature']
         df=cache.cache[uid]['df']
         cache.cache[uid]['model']=Model(df,target=target,features=feature)
-
+        print(cache.cache[uid]['model'].getMetrics())
         return jsonify({"message" : "model created successfully"}),200
     except Exception as e:
         return jsonify({"Error":str(e)})
@@ -217,11 +217,9 @@ def api_treat_outliers():
             session['uid']='u0001'
       
         uid = session.get('uid')
-        model=cache.cache[uid]['model'].getModel()
         features=cache.cache[uid]['feature']
         cache.cache[uid]['df'] = utils.treat_outliers(
-                cache.cache[uid]['df'],  1, features,
-                model.getModel()
+                cache.cache[uid]['df'],  2, features
             )
         return jsonify({"message" : "Outliers treated successfully"}),200
     except Exception as e:
@@ -299,7 +297,7 @@ def api_assumptions():
             "assumption_2":test_result_2,
             "assumption_3":test_result_3,
             "assumption_4":test_result_4,
-            "assumption_6":test_result_5
+            "assumption_5":test_result_5
         }
         return jsonify(res)
         
