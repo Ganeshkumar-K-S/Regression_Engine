@@ -58,7 +58,7 @@ def treat_null(df,col,method,value=None):
     finally:
         return df
     
-def outliers(df, method, features,model=None):
+def treat_outliers(df, method, features,model=None):
     try:
         if method == 1:
             # Cook's Distance (requires model)

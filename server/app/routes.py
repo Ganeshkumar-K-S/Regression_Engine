@@ -181,6 +181,9 @@ def api_treat_null():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+
 
 @engine.route('/makemodel',methods=['GET'])
 def make_model():
@@ -207,7 +210,23 @@ def make_model():
     except Exception as e:
         return jsonify({"Error":str(e)})
     
-
+@engine.route('/treat-outliers', methods=['GET'])
+def api_treat_outliers():
+    try:
+        if 'uid' not in session:
+            session['uid']='u0001'
+      
+        uid = session.get('uid')
+        model=cache.cache[uid]['model'].getModel()
+        features=cache.cache[uid]['feature']
+        cache.cache[uid]['df'] = utils.treat_null(
+                cache.cache[uid]['df'],  1, features,
+                model.getModel()
+            )
+        return jsonify({"message" : "Outliers treated successfully"}),200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 @engine.route('/assumptions')
 def api_assumptions():
     try:
@@ -236,7 +255,6 @@ def api_assumptions():
 
         target_transform=(test_result_3['result']=="failure")
         
-
         # assumption - 4
         test_result_4=utils.perfect_multicollinearity_test(model.X_train,list(model.X_train.columns))
         print(test_result_4)
