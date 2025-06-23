@@ -9,7 +9,7 @@ export default function DropFiles({ uploadedFile, setUploadedFile, uploadUUID, s
   const [error, setError] = useState('');
   const [hasUploaded, setHasUploaded] = useState(!!uploadedFile);
   const [isDragOver, setIsDragOver] = useState(false);
-
+  
   const handleFileChange = async (e) => {
     const files = e.target.files || e.dataTransfer?.files;
     if (!files || files.length === 0) return;

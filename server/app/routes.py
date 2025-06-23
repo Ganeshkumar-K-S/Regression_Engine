@@ -1,6 +1,7 @@
 import os
 from flask import Blueprint, request, jsonify, current_app,session
-from app.utils import get_attributes,to_dataframe,from_dataframe,encoding
+from app.utils import get_attributes,to_dataframe,from_dataframe
+from app.regression import Model
 import app.cache as cache
 import app.utils as utils
 import uuid
@@ -156,12 +157,12 @@ def send_null_attributes():
     
 @engine.route('/treat-null', methods=['POST'])
 def api_treat_null():
-    status=200
     try:
         response = request.get_json()
         if 'uid' not in session:
-            raise KeyError('uid not in session')
-        uid=session.get('uid')
+            session['uid']='u0001'
+
+        uid = session.get('uid')
 
         for col_name, config in response.items():
             method = config.get('method')
@@ -170,21 +171,23 @@ def api_treat_null():
             if method is None:
                 return jsonify({'error': f'Method missing for column "{col_name}"'}), 400
 
-            cache.cache[uid]['df'] = utils.treat_null(cache.cache[uid]['df'], col_name, method, value)
+            # Apply treatment
+            cache.cache[uid]['df'] = utils.treat_null(
+                cache.cache[uid]['df'], col_name, method, value
+            )
 
-
-        return from_dataframe(cache.cache[uid]['df'],'json')
+        return jsonify({'message': 'Null treatment applied successfully'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@engine.route('/getencode')
-def get_encode():
-    try:
+@engine.route('/makemodel',methods=['GET'])
+def make_model():
+    try: 
         if 'uid' not in session:
-            raise KeyError('Uid is not in the session')
+                # raise KeyError('Uid is not in the session')
+                session['uid']='u0001'
         uid=session.get("uid")
-
         if uid not in cache.cache:
             raise KeyError('Uid not in cache')
 
@@ -194,13 +197,30 @@ def get_encode():
             raise KeyError('Target not in session')
         if 'df' not in cache.cache[uid]:
             raise KeyError("dataframe is not in cache")
-        
         target=cache.cache[uid]['target']
         feature=cache.cache[uid]['feature']
-        cache.cache[uid]['df']= cache.cache[uid]['df'][[target] + feature]
-        cache.cache[uid]['df']=encoding(cache.cache[uid]['df'],target,feature,ignore_first=True)
-        return from_dataframe(cache.cache[uid]['df'],"json")
-    
+        df=cache.cache[uid]['df']
+        cache.cache[uid]['model']=Model(df,target=target,features=feature)
+
+        return jsonify({"message" : "model created successfully"}),200
     except Exception as e:
-        return jsonify({"error":str(e)})
+        return jsonify({"Error":str(e)})
     
+
+@engine.route('/normality_of_errors')
+def api_normality_of_errors():
+    try:
+        if 'uid' not in session:
+                raise KeyError('Uid is not in the session')
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        
+        test_result=utils.normality_of_errors_test(cache.cache[uid]['model'].getModel())
+        utils.plot_residual_histogram(cache.cache[uid]['model'].getModel().resid,uid)
+        return jsonify(test_result)
+    except Exception as e:
+        return jsonify({"Error":str(e)})

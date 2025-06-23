@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import useTooltip from '../hooks/useTooltip.jsx';
 
-export default function Attributes({ uploadedFile, uploadUUID, attributes, setAttributes }) {
+export default function Attributes({ uploadedFile, uploadUUID, attributes, setAttributes, features, target, isLocked }) {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const refs = useRef([]);
@@ -41,51 +41,63 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
 
   const filteredAttributes = useMemo(() => {
     if (!attributes || typeof attributes !== 'object') return [];
+
+    const used = new Set([...(features || []), target]);
     return Object.keys(attributes).filter(attr =>
-      attr.toLowerCase().includes(search.toLowerCase())
+      attr.toLowerCase().includes(search.toLowerCase()) && !used.has(attr)
     );
-  }, [attributes, search]);
+  }, [attributes, search, features, target]);
 
   const handleMouseEnter = (index, key) => {
     const el = refs.current[index];
-    console.log('Mouse enter:', key, el); // Debug log
     if (el) {
       showTooltip(el, key);
     }
   };
 
   const handleMouseLeave = () => {
-    console.log('Mouse leave'); // Debug log
     hideTooltip();
   };
 
   if (!uploadedFile || !attributes) return null;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto font-montserrat relative">
-      <h2 className="text-2xl font-semibold mb-4 text-center text-purple-700">🧩 Attribute Keys</h2>
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto font-montserrat">
+      <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-center text-purple-700">
+        🧩 Attribute Keys
+      </h2>
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
 
       <input
         type="text"
         placeholder="Search attributes..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full p-2 mb-4 border rounded text-md-montserrat border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
+        className="w-full px-4 py-2 mb-4 border rounded text-base font-montserrat border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
       />
 
       <Tooltip />
 
-      <Droppable droppableId="attribute-source" isDropDisabled={true}>
+      <Droppable
+        droppableId="attributes"
+        isDropDisabled={true}
+        isCombineEnabled={false}
+        isDragDisabled={isLocked}
+      >
         {(provided) => (
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className="border rounded-lg p-4 bg-gray-50 shadow-inner max-h-64 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+            className="border rounded-lg p-4 bg-gray-50 shadow-inner max-h-72 sm:max-h-80 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
           >
             {filteredAttributes.map((key, index) => (
-              <Draggable key={key} draggableId={key} index={index}>
+              <Draggable
+                key={key}
+                draggableId={key}
+                index={index}
+                isDragDisabled={isLocked}
+              >
                 {(provided) => (
                   <div className="relative group">
                     <div
@@ -97,7 +109,7 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
                       {...provided.dragHandleProps}
                       onMouseEnter={() => handleMouseEnter(index, key)}
                       onMouseLeave={handleMouseLeave}
-                      className="p-3 text-sm-montserrat rounded border shadow cursor-grab overflow-hidden 
+                      className="p-3 rounded border text-sm font-montserrat shadow cursor-grab overflow-hidden 
                                  bg-white text-purple-700 border-purple-300 
                                  hover:bg-purple-100 transition-colors duration-200"
                     >
