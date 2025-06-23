@@ -255,6 +255,8 @@ def api_assumptions():
         test_result_2=utils.visualize_independence_error(uid, y_pred, residuals)
         print(test_result_2)
         utils.visualize_independence_error(uid, y_pred, residuals)
+
+        fix_ind=(test_result_2['result']=='failure')
         
         # assumption - 3
         test_result_3=utils.normality_of_errors_test(model.getModel())
@@ -280,9 +282,14 @@ def api_assumptions():
         target_transform=(test_result_5['result']=="failure")
 
         if target_transform:
-                    model.y_train[model.target]=np.log(model.y_train['target'])
-                    model.y_test[model.target]=np.log(model.y_test['target'])
-                    model.setModel(generateModel(model.y_train,model.X_train))
+            model.y_train=np.log(model.y_train)
+            model.y_test=np.log(model.y_test)
+
+        if fix_ind:
+            model.setModel(generateGLSModel(model.y_train,model.X_train))
+        elif target_transform:
+            model.setModel(generateModel(model.y_train,model.X_train))
+            
 
         return jsonify(test_result_1)
         

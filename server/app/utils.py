@@ -274,7 +274,7 @@ def get_category_vars(df):
 def get_attributes(df):
     res = {}
     for col in df.columns:
-        res[col] = pd.api.types.is_numeric_dtype(df[col])
+        res[col] = True if pd.api.types.is_numeric_dtype(df[col]) else df[col].mode()[0]
     return res
 
 def to_dataframe(filepath,format):
