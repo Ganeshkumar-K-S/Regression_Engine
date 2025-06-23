@@ -109,30 +109,32 @@ def treat_outliers(df, method, features,model=None):
 def get_correlation_matrix(df,target,feature):
     return df[target,*feature].corr()
 #diagnose
-def get_correlation_feature(df,target,feature):
-    res={}
+def get_correlation_feature(df, target, feature):
+    res = {}
     for feat in feature:
-        corr_value=df[feat].corr(df[target])
-        res[feat]=corr_value
+        try:
+            if df[feat].dtype.kind in 'bifc' and df[feat].std() != 0 and df[target].std() != 0:
+                corr_value = df[feat].corr(df[target])
+                res[feat] = corr_value if not np.isnan(corr_value) else 0
+            else:
+                res[feat] = 0
+        except Exception as e:
+            print(f"Error processing {feat}: {e}")
+            res[feat] = 0
     return res
 #assumption-1 Linearity of feature-target relationship
-def linearity_test(df,target,feature):
-    failed=[]
+def linearity_test(df, target, feature):
+    failed = []
     print("Success")
-    res=get_correlation_feature(df,target,feature)
+    res = get_correlation_feature(df, target, feature)
     print(res)
-    for key,value in res.items():
+    for key, value in res.items():
         if abs(value) < 0.1:
             failed.append(key)
-    if not failed :
-        return {
-            'result':'success'
-            }
+    if not failed:
+        return {'result': 'success'}
     else:
-        return {
-            'result':'failure',
-            'features':failed
-            }
+        return {'result': 'failure', 'features': failed}
     
 #assumption-2 Independence of errors
 def independence_of_errors_test(model):
@@ -334,7 +336,6 @@ def visualize_linearity(uid, df, target, features):
     base_dir = os.path.abspath(os.path.dirname(__file__))
     font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
     font_prop = font_manager.FontProperties(fname=font_path)
-
 
     for feature in features:
         plt.figure(figsize=(6, 4))

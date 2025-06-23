@@ -251,9 +251,11 @@ def api_assumptions():
 
         # #assumption 1
         print(target)
-        test_result_1=utils.linearity_test(df,list(model.X_train.columns),target)
-        
-        utils.visualize_linearity(uid, df, list(model.X_train.columns), target)
+        encoded_df=utils.concatenate_df(model.y_train,model.X_train)
+        print(encoded_df)
+        test_result_1=utils.linearity_test(encoded_df,target,list(model.X_train.columns))
+        print(test_result_1)
+        utils.visualize_linearity(uid, encoded_df, target,list(model.X_train.columns))
         print("Running linearity_test...")
 
         #assumption 2
