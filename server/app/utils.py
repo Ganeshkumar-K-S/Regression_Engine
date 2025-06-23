@@ -351,7 +351,7 @@ def visualize_linearity(uid, df, target, features):
         save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_1')
         os.makedirs(save_dir, exist_ok=True)
 
-        filename = f"{uid}plots/{feature}vs{target}.jpeg"
+        filename = os.path.join(save_dir, f'{uid}{feature}vs{target}.jpeg')
         plt.savefig(filename, dpi=300)
         plt.close() 
 
@@ -376,7 +376,7 @@ def visualize_independence_error(uid, y_pred, residuals):
     save_dir = os.path.join(base_dir, 'static', 'images', 'assumption_2')
     os.makedirs(save_dir, exist_ok=True)
 
-    filename = f"{uid}.jpeg"
+    filename = os.path.join(save_dir, f'{uid}.jpeg')
     plt.savefig(filename, dpi=300)
     plt.close()
 

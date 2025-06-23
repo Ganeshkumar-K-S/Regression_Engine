@@ -219,7 +219,7 @@ def api_treat_outliers():
         uid = session.get('uid')
         model=cache.cache[uid]['model'].getModel()
         features=cache.cache[uid]['feature']
-        cache.cache[uid]['df'] = utils.treat_null(
+        cache.cache[uid]['df'] = utils.treat_outliers(
                 cache.cache[uid]['df'],  1, features,
                 model.getModel()
             )
@@ -239,14 +239,26 @@ def api_assumptions():
         if 'model' not in cache.cache[uid]:
             raise KeyError('model is not in the cache')
         model=cache.cache[uid]['model']
-        
+        target=cache.cache[uid]['target']
+        feature=cache.cache[uid]['feature']
         target_transform=False
-
-
-        # assumption - 3
-        test_result_3=utils.normality_of_errors_test(model.getModel())
+        df=cache.cache[uid]['df']
         y_pred = model.getModel().predict(model.X_test)
         residuals = model.y_test - y_pred
+
+        #assumption 1
+        test_result_1=utils.linearity_test(df,target,feature)
+        print(test_result_1)
+        utils.visualize_linearity(uid, df, target, feature)
+
+        #assumption 2
+
+        test_result_2=utils.visualize_independence_error(uid, y_pred, residuals)
+        print(test_result_2)
+        utils.visualize_independence_error(uid, y_pred, residuals)
+        # assumption - 3
+        test_result_3=utils.normality_of_errors_test(model.getModel())
+        
 
         y_pred = np.array(y_pred, dtype=np.float64)
         residuals = np.array(residuals, dtype=np.float64)
@@ -272,7 +284,7 @@ def api_assumptions():
                     model.y_test[model.target]=np.log(model.y_test['target'])
                     model.setModel(generateModel(model.y_train,model.X_train))
 
-        return jsonify(test_result_5)
+        return jsonify(test_result_1)
         
     except Exception as e:
         return jsonify({"Error":str(e)})
