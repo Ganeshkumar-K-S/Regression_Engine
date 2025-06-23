@@ -166,24 +166,27 @@ def perfect_multicollinearity_test(df, features, threshold=5.0):
         'high_vif_features': high_vif
     }
 
-def equal_variance_test(df, features, target, alpha=0.05):
-    violating_features = {}
-    for feature in features:
-        X = sm.add_constant(df[[feature]])
-        y = df[target]
-
-        model = sm.OLS(y, X).fit()
+def equal_variance_test(model, alpha=0.05):
+    try:
         residuals = model.resid
-        exog = model.model.exog
+        exog = model.model.exog  # Must include constant + features
 
-        bp_test = het_breuschpagan(residuals, exog)
-        p_value = bp_test[1]  # p-value
+        if exog.shape[1] < 2:
+            raise ValueError("Exog must have at least two columns including a constant.")
 
-        if p_value < alpha:
-            violating_features[feature]=p_value
+        lm_stat, lm_pval, f_stat, f_pval = het_breuschpagan(residuals, exog)
 
-    return violating_features
+        return {
+            "result": "failure" if lm_pval < alpha else "success",
+            "lm_stat": lm_stat,
+            "f_stat": f_stat,
+            "p_value": lm_pval
+        }
 
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
 #Fix
 #assumption-1 Linearity of feature-target relationship
 def fix_linearity(df,feature,method,degree=2):
@@ -295,6 +298,7 @@ def bayesian_target_encoding(x, y, feature, alpha=5):
     return x.map(mapping), mapping
 
 def preprocess_onehot(x, ignore_first=False):
+    features=[]
     res = pd.DataFrame(index=x.index)
     onehot_mapping = {}
     high_cardinality_cols = []
@@ -306,18 +310,22 @@ def preprocess_onehot(x, ignore_first=False):
             unique_vals = x[col].nunique()
             if unique_vals == 1:
                 res[col] = 1
-                onehot_mapping[col] = list(x[col].unique())
+                unique_val=list(x[col].unique())
+                onehot_mapping[col] = unique_val
+                features.append(unique_val)
             elif 1 < unique_vals < 10:
                 unique_categories = list(x[col].unique())
                 onehot_mapping[col] = unique_categories
                 if ignore_first:
                     unique_categories = unique_categories[1:]
+                features.extend(unique_categories)
                 for val in unique_categories:
                     res[f'{col}_{val}'] = (x[col] == val).astype(int)
             else:
                 high_cardinality_cols.append(col)
+                features.append(col)
 
-    return res, high_cardinality_cols, onehot_mapping
+    return res, high_cardinality_cols, onehot_mapping,features
 
 
 def visualize_linearity(uid, df, target, features):
@@ -438,4 +446,9 @@ def plot_equal_variance(uid,y_pred, residuals):
 
     filename = os.path.join(save_dir, f'{uid}.jpeg')
     plt.savefig(filename, dpi=300)
-    plt.color()
+    plt.close()
+
+
+def concatenate_df(df1,df2):
+    return pd.concat([df1,df2],axis=1)
+

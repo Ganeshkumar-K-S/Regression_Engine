@@ -1,9 +1,10 @@
 import os
 from flask import Blueprint, request, jsonify, current_app,session
 from app.utils import get_attributes,to_dataframe,from_dataframe
-from app.regression import Model
+from app.regression import Model,generateModel,generateGLSModel
 import app.cache as cache
 import app.utils as utils
+import numpy as np
 import uuid
 
 engine = Blueprint('engine', __name__)
@@ -207,20 +208,53 @@ def make_model():
         return jsonify({"Error":str(e)})
     
 
-@engine.route('/normality_of_errors')
-def api_normality_of_errors():
+@engine.route('/assumptions')
+def api_assumptions():
     try:
         if 'uid' not in session:
-                raise KeyError('Uid is not in the session')
+                session['uid']='u0001'
         uid=session.get("uid")
 
         if uid not in cache.cache:
             raise KeyError('Uid not in cache')
         if 'model' not in cache.cache[uid]:
             raise KeyError('model is not in the cache')
+        model=cache.cache[uid]['model']
         
-        test_result=utils.normality_of_errors_test(cache.cache[uid]['model'].getModel())
-        utils.plot_residual_histogram(cache.cache[uid]['model'].getModel().resid,uid)
-        return jsonify(test_result)
+        target_transform=False
+
+
+        # assumption - 3
+        test_result_3=utils.normality_of_errors_test(model.getModel())
+        y_pred = model.getModel().predict(model.X_test)
+        residuals = model.y_test - y_pred
+
+        y_pred = np.array(y_pred, dtype=np.float64)
+        residuals = np.array(residuals, dtype=np.float64)
+
+        utils.plot_equal_variance(uid, y_pred, residuals)
+
+        target_transform=(test_result_3['result']=="failure")
+        
+
+        # assumption - 4
+        test_result_4=utils.perfect_multicollinearity_test(model.X_train,list(model.X_train.columns))
+        print(test_result_4)
+        utils.plot_correlation_heatmap(uid,model.X_train,list(model.X_train.columns))
+
+
+        # assumption - 5
+        test_result_5=utils.equal_variance_test(model.getModel())
+        utils.plot_equal_variance(uid,y_pred,residuals)
+
+        target_transform=(test_result_5['result']=="failure")
+
+        if target_transform:
+                    model.y_train[model.target]=np.log(model.y_train['target'])
+                    model.y_test[model.target]=np.log(model.y_test['target'])
+                    model.setModel(generateModel(model.y_train,model.X_train))
+
+        return jsonify(test_result_5)
+        
     except Exception as e:
         return jsonify({"Error":str(e)})

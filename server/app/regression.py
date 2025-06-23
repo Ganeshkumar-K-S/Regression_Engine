@@ -10,11 +10,12 @@ class Model:
         self.target = target
         self.features = features
         self.p = len(features)
+        self.encoded_features=[]
 
         self.X = df[self.features]
         self.y = df[self.target]
 
-        self.X_encoded, self.bayes_features, self.onehot_mapping = preprocess_onehot(self.X)
+        self.X_encoded, self.bayes_features, self.onehot_mapping, self.encoded_features = preprocess_onehot(self.X)
 
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             self.X_encoded, self.y, test_size=test_size, random_state=random_state
@@ -37,6 +38,9 @@ class Model:
 
     def getModel(self):
         return self.__model
+    
+    def setModel(self,model):
+        self.__model=model
 
     def setModel(self, new_model):
         self.__model = new_model
@@ -63,3 +67,9 @@ class Model:
     
     def getOneHotMappings(self):
         return self.onehot_mapping
+    
+def generateModel(y,X):
+    return sm.OLS(y,X).fit()
+
+def generateGLSModel(y,X):
+    return sm.GLS(y,X).fit()
