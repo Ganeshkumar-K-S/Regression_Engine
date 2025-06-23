@@ -6,7 +6,6 @@ import app.cache as cache
 import app.utils as utils
 import numpy as np
 import uuid
-import pandas as pd
 
 engine = Blueprint('engine', __name__)
 
@@ -218,8 +217,7 @@ def api_treat_outliers():
             session['uid']='u0001'
       
         uid = session.get('uid')
-        raw_features=cache.cache[uid]['feature']
-        features = [f for f in raw_features if pd.api.types.is_numeric_dtype(df[f])]
+        features=cache.cache[uid]['feature']
         cache.cache[uid]['df'] = utils.treat_outliers(
                 cache.cache[uid]['df'],  2, features
             )
@@ -256,7 +254,6 @@ def api_assumptions():
         test_result_1=utils.linearity_test(encoded_df,target,list(model.X_train.columns))
         print(test_result_1)
         utils.visualize_linearity(uid, encoded_df, target,list(model.X_train.columns))
-        print("Running linearity_test...")
 
         #assumption 2
         test_result_2=utils.independence_of_errors_test(model.getModel())
