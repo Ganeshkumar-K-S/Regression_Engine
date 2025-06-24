@@ -7,35 +7,33 @@ export default function ModelBuilder() {
     const [apiDone, setApiDone] = useState(false);
     const [error, setError] = useState('');
 
-    // Generate random durations between 30-45 seconds (30000-45000ms)
-    const generateRandomDuration = () => Math.floor(Math.random() * 5000) + 30000;
-
-    const steps = [
-        { text: '⚙️ Preparing model...', delay: generateRandomDuration() },
-        { text: '📊 Validating features & target...', delay: generateRandomDuration() },
-        { text: '🧠 Analyzing dataframe...', delay: generateRandomDuration() },
-        { text: '🏗️ Building model...', delay: generateRandomDuration() },
-        { text: '📈 Finalizing metrics...', delay: generateRandomDuration() },
-    ];
-
     const capitalizeFirst = (str) => {
         if (!str) return '';
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
+    // Generate total duration (30–45s) and distribute it across steps using weights
+    const totalDuration = Math.floor(Math.random() * 15000) + 30000; // 30–45 seconds
+    const weights = [1, 1, 1.2, 1.5, 1.3]; // proportional time per step
+    const weightSum = weights.reduce((a, b) => a + b, 0);
+
+    const steps = [
+        { text: '⚙️ Preparing model...', delay: totalDuration * (weights[0] / weightSum) },
+        { text: '📊 Validating features & target...', delay: totalDuration * (weights[1] / weightSum) },
+        { text: '🧠 Analyzing dataframe...', delay: totalDuration * (weights[2] / weightSum) },
+        { text: '🏗️ Building model...', delay: totalDuration * (weights[3] / weightSum) },
+        { text: '📈 Finalizing metrics...', delay: totalDuration * (weights[4] / weightSum) },
+    ];
+
     useEffect(() => {
-        const totalDuration = steps.reduce((acc, step) => acc + step.delay, 0);
         const startTime = Date.now();
-        let intervalId;
 
-        const updateProgress = () => {
+        const interval = setInterval(() => {
             const elapsed = Date.now() - startTime;
-            const percent = Math.min((elapsed / totalDuration) * 100, 100);
-            
-            setProgress(percent);
-        };
+            const percent = (elapsed / totalDuration) * 100;
 
-        intervalId = setInterval(updateProgress, 200);
+            setProgress(Math.min(percent, 100));
+        }, 200);
 
         const runSteps = async () => {
             for (const step of steps) {
@@ -61,24 +59,15 @@ export default function ModelBuilder() {
             .catch((err) => {
                 setError(err.message);
                 setStatusText('❌ Error occurred while building the model');
-                if (intervalId) clearInterval(intervalId);
+                clearInterval(interval);
             });
 
-        return () => {
-            if (intervalId) clearInterval(intervalId);
-        };
+        return () => clearInterval(interval);
     }, []);
-
-    // Handle completion - this will trigger when both states change
-    useEffect(() => {
-        if (completedSteps && apiDone && !error) {
-            setProgress(100);
-        }
-    }, [completedSteps, apiDone, error]);
 
     return (
         <div className="w-full max-w-6xl mx-auto mt-20 p-6">
-            <div className="text-lg font-semibold text-center mb-4 text-chrysler-blue-700">
+            <div className="text-lg font-semibold text-center mb-4 text-chrysler-blue-700 font-montserrat">
                 {error ? `❌ ${error}` : completedSteps && apiDone ? '🎉 Model Ready!' : statusText}
             </div>
 
@@ -89,7 +78,7 @@ export default function ModelBuilder() {
                 ></div>
             </div>
 
-            <div className="text-center mt-3 text-sm text-amethyst-700">
+            <div className="text-center mt-3 text-sm text-amethyst-700 font-montserrat">
                 {Math.floor(progress)}%
             </div>
         </div>
