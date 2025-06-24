@@ -2,7 +2,15 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import useTooltip from '../hooks/useTooltip.jsx';
 
-export default function Attributes({ uploadedFile, uploadUUID, attributes, setAttributes, features, target, isLocked }) {
+export default function Attributes({
+  uploadedFile,
+  uploadUUID,
+  attributes,
+  setAttributes,
+  features,
+  target,
+  isLocked
+}) {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const refs = useRef([]);
@@ -63,7 +71,7 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto font-montserrat">
-      <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-center text-purple-700">
+      <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-center text-chrysler-blue-600">
         🧩 Attribute Keys
       </h2>
 
@@ -86,42 +94,51 @@ export default function Attributes({ uploadedFile, uploadUUID, attributes, setAt
         isDragDisabled={isLocked}
       >
         {(provided) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className="border rounded-lg p-4 bg-gray-50 shadow-inner max-h-72 sm:max-h-80 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-          >
-            {filteredAttributes.map((key, index) => (
-              <Draggable
-                key={key}
-                draggableId={key}
-                index={index}
-                isDragDisabled={isLocked}
-              >
-                {(provided) => (
-                  <div className="relative group">
-                    <div
-                      ref={(el) => {
-                        provided.innerRef(el);
-                        refs.current[index] = el;
-                      }}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      onMouseEnter={() => handleMouseEnter(index, key)}
-                      onMouseLeave={handleMouseLeave}
-                      className="p-3 rounded border text-sm font-montserrat shadow cursor-grab overflow-hidden 
-                                 bg-white text-purple-700 border-purple-300 
-                                 hover:bg-purple-100 transition-colors duration-200"
-                    >
-                      <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                        {key}
-                      </span>
+          <div className="relative rounded-lg border border-purple-300 overflow-hidden">
+            {/* Gradient Top & Bottom */}
+            <div className="pointer-events-none absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-gray-50 to-transparent z-10" />
+            <div className="pointer-events-none absolute bottom-0 left-0 w-full h-4 bg-gradient-to-t from-gray-50 to-transparent z-10" />
+
+            {/* Scrollable Grid */}
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="p-4 bg-gray-50 max-h-72 sm:max-h-80 overflow-y-auto
+                        grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4
+                        scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-gray-100"
+            >
+              {filteredAttributes.map((key, index) => (
+                <Draggable
+                  key={key}
+                  draggableId={key}
+                  index={index}
+                  isDragDisabled={isLocked}
+                >
+                  {(provided) => (
+                    <div className="relative group">
+                      <div
+                        ref={(el) => {
+                          provided.innerRef(el);
+                          refs.current[index] = el;
+                        }}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        onMouseEnter={() => handleMouseEnter(index, key)}
+                        onMouseLeave={handleMouseLeave}
+                        className="p-3 rounded border text-sm font-montserrat shadow cursor-grab overflow-hidden 
+                                  bg-white text-chrysler-blue-600 border-purple-300 
+                                  hover:bg-purple-100 transition-colors duration-200"
+                      >
+                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                          {key}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
           </div>
         )}
       </Droppable>

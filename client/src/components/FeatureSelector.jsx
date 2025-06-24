@@ -105,14 +105,14 @@ export default function FeatureSelector({
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto font-montserrat">
-      <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-center text-purple-700">
+      <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-center text-chrysler-blue-600">
         🎯 Feature and Target Selector
       </h2>
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Features Section */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold mb-2 text-purple-700">Features</h3>
+          <h3 className="text-lg font-semibold mb-2 text-chrysler-blue-600">Features</h3>
           <Droppable droppableId="features" isDropDisabled={isLocked}>
             {(provided, snapshot) => (
               <div
@@ -137,7 +137,7 @@ export default function FeatureSelector({
                           {...provided.dragHandleProps}
                           onMouseEnter={() => handleFeatureMouseEnter(index, key)}
                           onMouseLeave={handleMouseLeave}
-                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition duration-200 relative min-w-[120px] max-w-[200px] flex items-center justify-center text-center"
+                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-chrysler-blue-600 border-purple-300 hover:bg-purple-100 transition duration-200 relative min-w-[120px] max-w-[200px] flex items-center justify-center text-center"
                         >
                           <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">{key}</span>
                           {!isLocked && removeButton(() => handleRemoveFeature(key))}
@@ -154,7 +154,7 @@ export default function FeatureSelector({
 
         {/* Target Section */}
         <div className="w-full md:w-64 flex-shrink-0">
-          <h3 className="text-lg font-semibold mb-2 text-purple-700">Target</h3>
+          <h3 className="text-lg font-semibold mb-2 text-chrysler-blue-600">Target</h3>
           <Droppable droppableId="target" isDropDisabled={isLocked}>
             {(provided, snapshot) => (
               <div
@@ -179,7 +179,7 @@ export default function FeatureSelector({
                           {...provided.dragHandleProps}
                           onMouseEnter={() => handleTargetMouseEnter(target)}
                           onMouseLeave={handleMouseLeave}
-                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-purple-700 border-purple-300 hover:bg-purple-100 transition duration-200 relative text-center"
+                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-chrysler-blue-600 border-purple-300 hover:bg-purple-100 transition duration-200 relative text-center"
                         >
                           <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">{target}</span>
                           {!isLocked && removeButton(handleRemoveTarget)}

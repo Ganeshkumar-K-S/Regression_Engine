@@ -50,7 +50,7 @@ export default function DragDropWrapper({
     }
 
     if (dest === 'target') {
-      const isNumerical = attributes[draggableId]; // boolean expected from backend
+      const isNumerical = attributes[draggableId]; 
       if (isNumerical === true) {
         setTarget(draggableId);
         setFeatures((prev) => prev.filter((f) => f !== draggableId));

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import './index.css';
 import Header from './components/Header';
 import DropFiles from './components/DropFiles';
 import DragDropWrapper from './components/DragDropWrapper';
-
-import './index.css';
 import NullHandling from './components/NullHandling';
+import BuildModel from './components/BuildModel';
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -14,6 +14,7 @@ export default function App() {
   const [target, setTarget] = useState(null);
   const [targetError, setTargetError] = useState('');
   const [nullAttributes, setNullAttributes] = useState({});
+  const [nullTreated , setNullTreated] = useState(false);
 
   useEffect(() => {
     const clearCache = () => {
@@ -64,7 +65,13 @@ export default function App() {
         <NullHandling
           nullAttributes={Object.entries(nullAttributes)}
           attributes={attributes}
+          nullTreated={nullTreated}
+          setNullTreated={setNullTreated}
         />
+      )}
+
+      {Object.keys(attributes).length > 0 && Object.keys(nullAttributes).length > 0 && nullTreated && (
+        <BuildModel />
       )}
     </div>
   );

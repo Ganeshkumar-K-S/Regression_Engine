@@ -161,7 +161,7 @@ def api_treat_null():
     try:
         response = request.get_json()
         if 'uid' not in session:
-            session['uid']='u0001'
+            raise KeyError('uid not in session')
 
         uid = session.get('uid')
 
@@ -189,8 +189,7 @@ def api_treat_null():
 def make_model():
     try: 
         if 'uid' not in session:
-                # raise KeyError('Uid is not in the session')
-                session['uid']='u0001'
+            raise KeyError('uid not in session')
         uid=session.get("uid")
         if uid not in cache.cache:
             raise KeyError('Uid not in cache')
@@ -214,7 +213,7 @@ def make_model():
 def api_treat_outliers():
     try:
         if 'uid' not in session:
-            session['uid']='u0001'
+            raise KeyError('uid not in session')
       
         uid = session.get('uid')
         features=cache.cache[uid]['feature']
@@ -229,7 +228,7 @@ def api_treat_outliers():
 def api_assumptions():
     try:
         if 'uid' not in session:
-                session['uid']='u0001'
+            raise KeyError('uid not in session')
         uid=session.get("uid")
 
         if uid not in cache.cache:

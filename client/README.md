@@ -14,7 +14,7 @@ If you are developing a production application, we recommend using TypeScript wi
 Run:
 
 ```
-npm install tailwindcss @tailwindcss/vite
+npm install tailwindcss @tailwindcss/vite tailwind-scrollbar
 npm install react-dropzone @heroicons/react @hello-pangea/dnd
 
 npm run dev
