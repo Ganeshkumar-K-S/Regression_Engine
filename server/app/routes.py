@@ -14,8 +14,7 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            session['uid']='u0001'
-        #     raise KeyError('uid not in session')
+            raise KeyError('uid not in session')
         
         uid=session.get('uid','123')
         print(uid)
@@ -299,5 +298,44 @@ def api_assumptions():
         }
         return jsonify(res)
         
+    except Exception as e:
+        return jsonify({"Error":str(e)})
+    
+@engine.route('/getinference')
+def get_inference():
+    try:
+        if 'uid' not in session:
+            raise KeyError("uid not in the session")
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        model=cache.cache[uid]['model']
+        return jsonify(model.make_inference())
+        
+    except Exception as e:
+        return jsonify({"Error":str(e)})
+    
+@engine.route('/getprediction',methods=['POST'])
+def get_prediction():
+    try:
+        if 'uid' not in session:
+            raise KeyError("uid not in the session")
+        data=request.get_json()
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        model=cache.cache[uid]['model']
+        pred=utils.make_predictions(model,data=data)
+        result={
+            "result":pred
+        }
+        return jsonify(result)
+
     except Exception as e:
         return jsonify({"Error":str(e)})

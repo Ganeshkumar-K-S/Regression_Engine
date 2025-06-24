@@ -68,6 +68,57 @@ class Model:
     def getOneHotMappings(self):
         return self.onehot_mapping
     
+    def make_inference(self, significance_level=0.05):
+        if self.__model is None:
+            return "Model is not trained yet."
+
+        summary = self.__model.summary2().tables[1] 
+        inferences=[]
+
+        for var in summary.index:
+            coef = summary.loc[var, 'Coef.']
+            p_val = summary.loc[var, 'P>|t|']
+
+            if var == 'const':
+                continue
+
+            if p_val < significance_level:
+                direction = "positive" if coef > 0 else "negative"
+                inferences.append({
+                     'feature':var,
+                     'direction':direction,
+                     'p_val':f"{p_val:.3f}"
+                     })
+            else:
+                inferences.append({
+                     'feature':var,
+                     'direction':'NIL',
+                     'p_val':f"{p_val:.3f}"
+                })
+
+        return inferences
+    
+    def getEquation(self):
+        equation=[]
+        summary = self.__model.summary2().tables[1] 
+        for var in summary.index:
+            coef = summary.loc[var, 'Coef.']
+            if var=='const':
+                 equation.append(f"{coef:.3f}")
+            else:
+                 equation.append(f"{coef:.3f}({var})")
+        n=len(equation)
+        res=""
+        for i in range(n):
+            if i==0 and i==n-1:
+                res+=f" {equation[i]}"
+            else:
+                if equation[i][0]=='-':
+                     res+=f" - {equation[i][1:]}"
+                else:
+                     res+=f" + {equation[i]}"
+        return res
+    
 def generateModel(y,X):
     return sm.OLS(y,X).fit()
 

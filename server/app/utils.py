@@ -453,3 +453,29 @@ def plot_equal_variance(uid,y_pred, residuals):
 def concatenate_df(df1,df2):
     return pd.concat([df1,df2],axis=1)
 
+def make_predictions(model_obj, data):
+    test_df = {}
+
+    for key, val in data.items():
+        if val['num'] == True:
+            test_df[key] = val['value']
+        else:
+            if key in model_obj.getOneHotMappings():
+                categories = model_obj.getOneHotMappings()[key]
+                for category in categories:
+                    test_df[f'{key}_{category}'] = 1 if category == val['value'] else 0
+            elif key in model_obj.getBayesMappings():
+                mapping = model_obj.getBayesMappings()[key]
+                test_df[key] = mapping.get(val['value'], mapping.mean()) 
+            else:
+                raise KeyError(f"Invalid attribute or missing encoding for '{key}'")
+
+    model_features = model_obj.getModel().model.exog_names
+    if 'const' in model_features:
+        test_df['const'] = 1.0
+    for col in model_features:
+        if col not in test_df:
+            test_df[col] = 0
+
+    test_df_df = pd.DataFrame([test_df])[model_features]
+    return model_obj.getModel().predict(test_df_df)[0]
