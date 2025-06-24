@@ -14,10 +14,8 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            raise KeyError('uid not in session')
-        
-        uid=session.get('uid','123')
-        print(uid)
+            raise KeyError("uid not in session")
+        uid=session.get('uid')
         cache.cache[uid]={}
         cache.cache[uid]['uploads_path'] = os.path.join(upload_dir, f"{name}.{format}")
         cache.cache[uid]['format'] = format
@@ -123,7 +121,8 @@ def get_target_feature():
             raise KeyError('feature is not in the session')
         cache.cache[uid]['target']=response['target']
         cache.cache[uid]['feature']=response['feature']
-        return jsonify(response)
+        return response
+
     except Exception as e:
         return jsonify({"error":str(e)})
     
@@ -203,8 +202,10 @@ def make_model():
         feature=cache.cache[uid]['feature']
         df=cache.cache[uid]['df']
         cache.cache[uid]['model']=Model(df,target=target,features=feature)
-        print(cache.cache[uid]['model'].getMetrics())
-        return jsonify({"message" : "model created successfully"}),200
+        model=cache.cache[uid]['model']
+        return jsonify({
+            "message" : "model created successfully",
+            "r2_score": model.getMetrics()['adjusted_R2']}),200
     except Exception as e:
         return jsonify({"Error":str(e)})
     
