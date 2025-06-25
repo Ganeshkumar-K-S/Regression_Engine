@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 import useTooltip from '../hooks/useTooltip.jsx';
 
 export default function FeatureSelector({
@@ -18,9 +20,16 @@ export default function FeatureSelector({
   setNullTreated,
   setStartClicked
 }) {
+  const [isLoading, setIsLoading] = useState(true);
   const featureRefs = useRef([]);
   const targetRef = useRef(null);
   const { showTooltip, hideTooltip, Tooltip } = useTooltip();
+
+  useEffect(() => {
+    if (attributes && Object.keys(attributes).length > 0) {
+      setIsLoading(false);
+    }
+  }, [attributes]);
 
   useEffect(() => {
     if (targetError) {
@@ -30,70 +39,65 @@ export default function FeatureSelector({
   }, [targetError, setTargetError]);
 
   const handleFeatureMouseEnter = (index, key) => {
-    const el = featureRefs.current[index];
-    if (el) showTooltip(el, key);
-  };
-
-  const handleTargetMouseEnter = (key) => {
-    const el = targetRef.current;
-    if (el) showTooltip(el, key);
-  };
-
-  const handleMouseLeave = () => hideTooltip();
-
-  const handleRemoveFeature = (key) => {
-    setFeatures(prev => prev.filter(item => item !== key));
-  };
-
-  const handleRemoveTarget = () => {
-    setTarget('');
-  };
-
-  const handleStart = async () => {
-    try {
-        // Step 1: Send target and feature to backend
-        const res = await fetch('http://localhost:5000/api/gettargetfeature', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ target, feature: features }),
-        });
-
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
-        const data = await res.json();
-        if (data.error) {
-            setTargetError(data.error);
-            return;
-        }
-
-        // Step 2: Fetch null value info
-        const nullRes = await fetch('http://localhost:5000/api/getnull', {
-            credentials: 'include',
-        });
-
-        if (!nullRes.ok) throw new Error(`HTTP error! status: ${nullRes.status}`);
-
-        const nullData = await nullRes.json();
-        setStartClicked(true); 
-        if (nullData.error) {
-            setTargetError(nullData.error);
-        } else {
-            setNullAttributes(nullData);
-            setIsLocked(true);
-            if (Object.keys(nullData).length === 0 && nullData.constructor === Object) {
-                setNullTreated(true);
-            }
-        }
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        setTargetError(`An unexpected error occurred: ${err.message}`);
+    if (!isLoading) {
+      const el = featureRefs.current[index];
+      if (el) showTooltip(el, key);
     }
   };
 
+  const handleTargetMouseEnter = (key) => {
+    if (!isLoading) {
+      const el = targetRef.current;
+      if (el) showTooltip(el, key);
+    }
+  };
+
+  const handleMouseLeave = () => hideTooltip();
+  const handleRemoveFeature = (key) => setFeatures(prev => prev.filter(item => item !== key));
+  const handleRemoveTarget = () => setTarget('');
+
+  const handleStart = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/gettargetfeature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ target, feature: features }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+
+      if (data.error) {
+        setTargetError(data.error);
+        return;
+      }
+
+      const nullRes = await fetch('http://localhost:5000/api/getnull', {
+        credentials: 'include',
+      });
+
+      if (!nullRes.ok) throw new Error(`HTTP error! status: ${nullRes.status}`);
+      const nullData = await nullRes.json();
+      setStartClicked(true);
+
+      if (nullData.error) {
+        setTargetError(nullData.error);
+      } else {
+        setNullAttributes(nullData);
+        setIsLocked(true);
+        if (Object.keys(nullData).length === 0) {
+          setNullTreated(true);
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setTargetError(`An unexpected error occurred: ${err.message}`);
+    }
+  };
 
   const removeButton = (onClickHandler) => (
     <button
@@ -103,14 +107,7 @@ export default function FeatureSelector({
       title="Remove"
     >
       <span className="sr-only">Remove</span>
-      <svg
-        className="h-3 w-3"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
+      <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
@@ -126,39 +123,45 @@ export default function FeatureSelector({
         {/* Features Section */}
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-semibold mb-2 text-chrysler-blue-600">Features</h3>
-          <Droppable droppableId="features" isDropDisabled={isLocked}>
+          <Droppable droppableId="features" isDropDisabled={isLocked || isLoading}>
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 className={`border rounded-lg p-4 shadow-inner min-h-[5rem] flex flex-wrap gap-3 transition-colors duration-200 ${
-                  snapshot.isDraggingOver 
-                    ? 'bg-purple-100 border-purple-400' 
+                  snapshot.isDraggingOver
+                    ? 'bg-purple-100 border-purple-400'
                     : 'bg-gray-50 border-gray-300'
                 }`}
               >
-                {features.map((key, index) => (
-                  <Draggable key={key} draggableId={key} index={index} isDragDisabled={isLocked}>
-                    {(provided) => (
-                      <div className="relative group">
-                        <div
-                          ref={(el) => {
-                            provided.innerRef(el);
-                            featureRefs.current[index] = el;
-                          }}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          onMouseEnter={() => handleFeatureMouseEnter(index, key)}
-                          onMouseLeave={handleMouseLeave}
-                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-chrysler-blue-600 border-purple-300 hover:bg-purple-100 transition duration-200 relative min-w-[120px] max-w-[200px] flex items-center justify-center text-center"
-                        >
-                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">{key}</span>
-                          {!isLocked && removeButton(() => handleRemoveFeature(key))}
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <Skeleton key={idx} height={36} width={120} borderRadius={12} />
+                  ))
+                ) : (
+                  features.map((key, index) => (
+                    <Draggable key={key} draggableId={key} index={index} isDragDisabled={isLocked}>
+                      {(provided) => (
+                        <div className="relative group">
+                          <div
+                            ref={(el) => {
+                              provided.innerRef(el);
+                              featureRefs.current[index] = el;
+                            }}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            onMouseEnter={() => handleFeatureMouseEnter(index, key)}
+                            onMouseLeave={handleMouseLeave}
+                            className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-chrysler-blue-600 border-purple-300 hover:bg-purple-100 transition duration-200 relative min-w-[120px] max-w-[200px] flex items-center justify-center text-center"
+                          >
+                            <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">{key}</span>
+                            {!isLocked && removeButton(() => handleRemoveFeature(key))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
+                      )}
+                    </Draggable>
+                  ))
+                )}
                 {provided.placeholder}
               </div>
             )}
@@ -168,38 +171,42 @@ export default function FeatureSelector({
         {/* Target Section */}
         <div className="w-full md:w-64 flex-shrink-0">
           <h3 className="text-lg font-semibold mb-2 text-chrysler-blue-600">Target</h3>
-          <Droppable droppableId="target" isDropDisabled={isLocked}>
+          <Droppable droppableId="target" isDropDisabled={isLocked || isLoading}>
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 className={`border rounded-lg p-4 shadow-inner min-h-[5rem] flex items-center justify-center transition-colors duration-200 ${
-                  snapshot.isDraggingOver 
-                    ? 'bg-purple-100 border-purple-400' 
+                  snapshot.isDraggingOver
+                    ? 'bg-purple-100 border-purple-400'
                     : 'bg-gray-50 border-gray-300'
                 }`}
               >
-                {target && (
-                  <Draggable draggableId={target} index={0} isDragDisabled={isLocked}>
-                    {(provided) => (
-                      <div className="relative group w-full">
-                        <div
-                          ref={(el) => {
-                            provided.innerRef(el);
-                            targetRef.current = el;
-                          }}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          onMouseEnter={() => handleTargetMouseEnter(target)}
-                          onMouseLeave={handleMouseLeave}
-                          className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-chrysler-blue-600 border-purple-300 hover:bg-purple-100 transition duration-200 relative text-center"
-                        >
-                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">{target}</span>
-                          {!isLocked && removeButton(handleRemoveTarget)}
+                {isLoading ? (
+                  <Skeleton height={36} width={180} borderRadius={12} />
+                ) : (
+                  target && (
+                    <Draggable draggableId={target} index={0} isDragDisabled={isLocked}>
+                      {(provided) => (
+                        <div className="relative group w-full">
+                          <div
+                            ref={(el) => {
+                              provided.innerRef(el);
+                              targetRef.current = el;
+                            }}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            onMouseEnter={() => handleTargetMouseEnter(target)}
+                            onMouseLeave={handleMouseLeave}
+                            className="p-3 text-sm-montserrat rounded border shadow cursor-grab bg-white text-chrysler-blue-600 border-purple-300 hover:bg-purple-100 transition duration-200 relative text-center"
+                          >
+                            <span className="block overflow-hidden text-ellipsis whitespace-nowrap pr-6">{target}</span>
+                            {!isLocked && removeButton(handleRemoveTarget)}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </Draggable>
+                      )}
+                    </Draggable>
+                  )
                 )}
                 {provided.placeholder}
               </div>
@@ -217,7 +224,7 @@ export default function FeatureSelector({
       <div className="text-center mt-8">
         <button
           onClick={handleStart}
-          disabled={isLocked}
+          disabled={isLocked || isLoading}
           className="px-6 py-2 rounded bg-purple-600 text-white font-semibold font-montserrat hover:bg-purple-700 transition disabled:opacity-50"
         >
           🚀 Start

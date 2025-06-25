@@ -16,6 +16,7 @@ Run:
 ```
 npm install tailwindcss @tailwindcss/vite tailwind-scrollbar
 npm install react-dropzone @heroicons/react @hello-pangea/dnd
+npm install react-loading-skeleton
 
 npm run dev
 ```

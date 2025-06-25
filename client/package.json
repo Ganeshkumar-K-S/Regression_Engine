@@ -17,6 +17,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",
+    "react-loading-skeleton": "^3.5.0",
     "tailwind-scrollbar": "^4.0.2"
   },
   "devDependencies": {
