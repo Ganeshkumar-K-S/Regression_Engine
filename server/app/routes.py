@@ -464,3 +464,128 @@ def get_feature_values():
 
     except Exception as e:
         return jsonify({"Error":str(e)})
+
+
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+from flask import send_file
+
+@engine.route('/generatereport')
+def download_pdf():
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    template_dir = os.path.join(base_dir, 'templates')
+    font_path_medium = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Medium.ttf')
+    font_path_bold = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Bold.ttf')
+    icon_path = os.path.join(base_dir, 'static', 'images', 'icon.svg')
+    output_path = os.path.join(base_dir, 'static', 'downloads', 'styled_report.pdf')
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template('report.html')
+
+    # Dummy data
+    target = "Price"
+    features = ["X", "Y", "Z", "table", "carat", "clarity"]
+    equation=[' - 1.701\n', 
+              ' - 0.672(carat)\n', 
+              ' - 0.279(cut_Ideal)\n',
+                ' - 0.323(cut_Premium)\n',
+                  ' - 0.347(cut_Good)\n',
+                    ' - 0.310(cut_Very Good)\n',
+                      ' - 0.443(cut_Fair)\n',
+                        ' - 0.091(color_E)\n',
+                          ' - 0.418(color_I)\n',
+                            ' - 0.556(color_J)\n',
+                             ' - 0.291(color_H)\n', ' - 0.124(color_F)\n', ' - 0.191(color_G)\n', ' - 0.031(color_D)\n', ' - 0.481(clarity_SI2)\n', ' - 0.313(clarity_SI1)\n', ' - 0.104(clarity_VS1)\n', ' - 0.169(clarity_VS2)\n', ' + 0.019(clarity_VVS2)\n', ' + 0.087(clarity_VVS1)\n', ' - 0.920(clarity_I1)\n', ' + 0.180(clarity_IF)\n', ' + 0.050(depth)\n', ' + 0.009(table)\n', ' + 1.159(x)\n', ' + 0.024(y)\n', ' + 0.108(z)\n']
+
+    result={
+		"assumption_1": {
+			"features": [
+				"const",
+				"clarity_SI1",
+				"clarity_VS1",
+				"clarity_VS2",
+				"clarity_VVS2",
+				"clarity_VVS1",
+				"clarity_I1",
+				"clarity_IF",
+				"cut_Ideal",
+				"cut_Premium",
+				"cut_Good",
+				"cut_Very Good",
+				"cut_Fair"
+			],
+			"result": "failure"
+		},
+		"assumption_2": {
+			"result": "success",
+			"test_val_dbw": 1.9910171345615393
+		},
+		"assumption_3": {
+			"result": "failure",
+			"test_val_jb": 0.0
+		},
+		"assumption_4": {
+			"high_vif_features": [
+				"const",
+				"clarity_SI2",
+				"clarity_SI1",
+				"clarity_VS1",
+				"clarity_VS2",
+				"clarity_VVS2",
+				"clarity_VVS1",
+				"clarity_I1",
+				"clarity_IF",
+				"cut_Ideal",
+				"cut_Premium",
+				"cut_Good",
+				"cut_Very Good"
+			],
+			"result": "failure",
+			"vif": {
+				"clarity_I1": 6593850113280.4,
+				"clarity_IF": 1356097448771.6,
+				"clarity_SI1": 201465128.3,
+				"clarity_SI2": 321697176854.2,
+				"clarity_VS1": 8337567519.4,
+				"clarity_VS2": 5390304760467.4,
+				"clarity_VVS1": 1125899906842624.0,
+				"clarity_VVS2": 26036706.0,
+				"const": 2329126222.0,
+				"cut_Fair": 1.2,
+				"cut_Good": 131086262293.9,
+				"cut_Ideal": 143298485.3,
+				"cut_Premium": 2792677145.1,
+				"cut_Very Good": 181332733.6
+			}
+		},
+		"assumption_5": {
+			"f_stat": 102.9324334840852,
+			"lm_stat": 1394.9567487753548,
+			"p_value": 1.9796547240158326e-289,
+			"result": "failure"
+		}
+	}
+
+    metrics={
+        'MAE': 0.11022949369154744, 
+         'MSE': 0.03722808672074357, 
+         'RMSE': 0.19294581291322072, 
+         'R2': 0.9633148813538335,
+         'adjusted_R2': 0.9632842508623394
+	}
+    
+    html_out = template.render(
+        font_path_medium=font_path_medium,
+        font_path_bold=font_path_bold,
+        icon_path=icon_path,
+        target=target,
+        features=features,
+        equation=equation,
+        result=result,
+        metrics=metrics
+    )
+
+    # Generate PDF
+    HTML(string=html_out, base_url=base_dir).write_pdf(output_path)
+    return send_file(output_path, as_attachment=True, download_name="styled_report.pdf")

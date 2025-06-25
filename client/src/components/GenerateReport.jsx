@@ -1,27 +1,13 @@
 import React from 'react';
 
 export default function GenerateReport() {
-    const handleClick = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/api/generatereport', {
-                method: 'GET', 
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log('Report generated:', data);
-            alert('Report generated successfully!');
-        } catch (error) {
-            console.error('Failed to generate report:', error);
-            alert('Failed to generate report');
-        }
+    const handleClick = () => {
+        const link = document.createElement('a');
+        link.href = 'http://localhost:5000/api/generatereport';
+        link.download = 'styled_report.pdf'; // Suggests filename
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -34,5 +20,4 @@ export default function GenerateReport() {
             </button>
         </div>
     );
-
 }

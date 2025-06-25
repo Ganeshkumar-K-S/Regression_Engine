@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: 'Montserrat-Medium';
+            src: url("file://{{ font_path_medium }}") format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Montserrat-Bold';
+            src: url("file://{{ font_path_bold }}") format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'Montserrat-Medium', sans-serif;
+            margin: 40px;
+            background-color: #ffffff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header img {
+            height: 30px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #5603ad;
+            font-size: 30px;
+            font-family: 'Montserrat-Bold';
+        }
+
+        h3 {
+            margin-top: 5px;
+            color: #666;
+            font-weight: normal;
+            font-size: 16px;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: none;
+            height: 2px;
+            background-color: #2a4eff;
+        }
+
+        .section {
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-family: 'Montserrat-Bold';
+            color: #15298c;
+            margin-bottom: 12px;
+            margin-top:10px
+        }
+
+        .section-content {
+            background-color: #f9f9ff;
+            border-left: 5px solid #5603ad;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-family: 'Montserrat-Medium';
+            border-radius: 6px;
+        }
+
+        .features-list {
+            padding-left: 18px;
+            margin: 0;
+        }
+
+        .features-list li {
+            margin-bottom: 8px;
+        }
+
+        .equation-style {
+            font-size: 13px;
+            font-family: 'Montserrat-Medium';
+            color: #222;
+            margin: 6px 0;
+        }
+
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+        }
+
+        .assumption-check {
+            margin-top: 40px;
+        }
+
+        .assumption-title {
+            font-size: 16px;
+            font-family: 'Montserrat-Bold';
+            color: #15298c;
+            margin-top: 20px;
+            margin-bottom: 6px;
+        }
+
+        .assumption-result {
+            background-color: #f9f9ff;
+            border-left: 4px solid #5603ad;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-family: 'Montserrat-Medium';
+            border-radius: 6px;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .threshold {
+            color: grey;
+            font-weight: 600;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        p {
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+        .good {
+            color: #27ae60; /* green */
+            font-weight: bold;
+        }
+
+        .moderate {
+            color: #e67e22; /* orange */
+            font-weight: bold;
+        }
+
+        .poor {
+            color: #c0392b; /* red */
+            font-weight: bold;
+        }
+        strong{
+            font-family: 'Montserrat-Bold';
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="header">
+        <img src="{{ icon_path }}" alt="Logo" style="position: relative; top:-10px">
+        <div>
+            <h1>Regression Engine</h1>
+            <strong><h3>Model Report</h3></strong>
+        </div>
+    </div>
+
+    <hr>
+
+    <div>
+        <div class="section-title">Overview</div>
+        <p>
+            In this analysis, multiple linear regression was performed to examine the relationship between the dependent variable and several independent variables. This type of regression was chosen because it allows for the quantification of the individual impact of each predictor on the target variable while controlling for the effects of others. The model assumes a linear relationship between the predictors and the response, and it was trained on a preprocessed dataset with appropriate scaling and handling of missing values. The regression coefficients provide insights into the direction and magnitude of each feature's influence, while statistical metrics such as R², adjusted R², and p-values were used to assess the model's explanatory power and the significance of each predictor.
+        </p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Target</div>
+        <div class="section-content">
+            <ul class="features-list">
+                <li>{{ target }}</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Features</div>
+        <div class="section-content">
+            <ul class="features-list">
+            {% for i in features %}
+                <li>{{ i }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <div class="section-title">Regression Equation</div>
+        {% for i in equation %}
+            <p class="equation-style">{{ i }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="assumption-check page-break">
+        <div class="section-title">Assumption Check</div>
+
+        <div class="assumption-title">1. Linearity</div>
+        {% if result['assumption_1']['result'] == "failure" %}
+        <div class="assumption-result">Test Result: {{ result['assumption_1']['result'] }}</div>
+        <div class="assumption-result">Feature(s) without a significant relationship:
+        {% for i in result['assumption_1']['features'] %}
+            <p>{{ i }}</p>
+        {% endfor %}
+        </div>
+        {% else %}
+        <div class="assumption-result">Test Result: {{ result['assumption_1']['result'] }}</div>
+        {% endif %}
+
+        <div class="assumption-title">2. Independence of Errors</div>
+        <div class="assumption-result">
+            Test Result: {{ result['assumption_2']['result'] }}<br>
+            Durbin Watson Stat: {{ result['assumption_2']['test_val_dbw'] | round(2) }}
+            <div class="threshold">Threshold: 1.5 to 2.5</div>
+        </div>
+
+        <div class="assumption-title">3. Normality of Errors</div>
+        <div class="assumption-result">
+            Result: {{ result['assumption_3']['result'] }}<br>
+            Jarque-Bera Stat: {{ result['assumption_3']['test_val_jb'] | round(2) }}
+            <div class="threshold">Threshold p-value: 0.05</div>
+        </div>
+
+        <div class="assumption-title">4. No Perfect Multicollinearity</div>
+        <div class="assumption-result">
+            Result: {{ result['assumption_4']['result'] }}
+            {% if result['assumption_4']['result'] == "failure" %}
+                <br>High VIF Features: {{ result['assumption_4']['high_vif_features'] | length }}
+                <div class="threshold">Threshold VIF: between 5 to 10</div>
+            {% endif %}
+        </div>
+
+        <div class="assumption-title">5. Equal Variance of Errors (Homoscedasticity)</div>
+        <div class="assumption-result">
+            Result: {{ result['assumption_5']['result'] }}<br>
+            Breusch-Pagan Stat: {{ result['assumption_5']['p_value'] | round(2) }}
+            <div class="threshold">Threshold p-value: 0.05</div>
+        </div>
+    </div>
+
+    <div class="page-break">
+        <div class="section-title">Model Evaluation</div>
+        <div class="section-content">
+            <ul class="features-list">
+                <li>
+                    Mean Absolute Error (MAE): 
+                    <span class="{% if metrics['MAE'] < 5 %}good{% elif metrics['MAE'] < 10 %}moderate{% else %}poor{% endif %}">
+                        {{ metrics['MAE'] | round(4) }}
+                    </span>
+                    <span class="threshold">(lower is better)</span>
+                </li>
+                <li>
+                    Mean Squared Error (MSE): 
+                    <span class="{% if metrics['MSE'] < 25 %}good{% elif metrics['MSE'] < 100 %}moderate{% else %}poor{% endif %}">
+                        {{ metrics['MSE'] | round(4) }}
+                    </span>
+                    <span class="threshold">(lower is better)</span>
+                </li>
+                <li>
+                    Root Mean Squared Error (RMSE): 
+                    <span class="{% if metrics['RMSE'] < 5 %}good{% elif metrics['RMSE'] < 10 %}moderate{% else %}poor{% endif %}">
+                        {{ metrics['RMSE'] | round(4) }}
+                    </span>
+                    <span class="threshold">(lower is better)</span>
+                </li>
+                <li>
+                    R² Score: 
+                    <span class="{% if metrics['R2'] > 0.9 %}good{% elif metrics['R2'] > 0.75 %}moderate{% else %}poor{% endif %}">
+                        {{ metrics['R2'] | round(4) }}
+                    </span>
+                    <span class="threshold">(higher is better)</span>
+                </li>
+                <li>
+                    Adjusted R² Score: 
+                    <span class="{% if metrics['adjusted_R2'] > 0.9 %}good{% elif metrics['adjusted_R2'] > 0.75 %}moderate{% else %}poor{% endif %}">
+                        {{ metrics['adjusted_R2'] | round(4) }}
+                    </span>
+                    <span class="threshold">(should be close to R²)</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="section-title">Conclusion</div>
+    <p>
+        Based on the provided metrics, the model demonstrates
+        <strong>
+            {% if metrics['R2'] > 0.9 %}
+                excellent
+            {% elif metrics['R2'] > 0.75 %}
+                good
+            {% elif metrics['R2'] > 0.5 %}
+                moderate
+            {% else %}
+                poor
+            {% endif %}
+        </strong> explanatory power, with an R² score of 
+        <strong>{{ metrics['R2'] | round(4) }}</strong>.<br><br>
+    
+        The prediction errors — Mean Absolute Error (MAE) = 
+        <strong>{{ metrics['MAE'] | round(4) }}</strong> and 
+        Root Mean Squared Error (RMSE) = <strong>{{ metrics['RMSE'] | round(4) }}</strong> — 
+        are considered 
+        <strong>
+            {% if metrics['RMSE'] < 5 %}
+                minimal
+            {% elif metrics['RMSE'] < 10 %}
+                reasonable
+            {% else %}
+                significant
+            {% endif %}
+        </strong> based on common thresholds.<br><br>
+    
+        The adjusted R² score of <strong>{{ metrics['adjusted_R2'] | round(4) }}</strong> 
+        being close to R² indicates that the model includes relevant features and is not overfitting.
+    </p>
+        
+    
+</body>
+</html>
