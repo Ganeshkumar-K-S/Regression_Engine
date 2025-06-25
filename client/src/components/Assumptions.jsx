@@ -38,11 +38,11 @@ export default function Assumptions({ uuid, features }) {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen py-8">
+            <div className="min-h-screen py-8 font-montserrat">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-8">
-                        <h2 className="text-3xl font-bold text-slate-800 mb-2">Loading Assumptions</h2>
-                        <p className="text-slate-600">Analyzing your data...</p>
+                        <h2 className="text-3xl font-bold text-chrysler-blue-600 mb-2">Loading Assumptions</h2>
+                        <p className="text-amethyst-600">Analyzing your data...</p>
                     </div>
                     <div className="flex flex-wrap justify-center gap-6">
                         {[...Array(6)].map((_, index) => (
@@ -56,11 +56,11 @@ export default function Assumptions({ uuid, features }) {
 
     if (!assumptionsData || !outlierData) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center font-montserrat">
                 <div className="text-center">
                     <div className="text-red-500 text-6xl mb-4">⚠️</div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Failed to Load Data</h2>
-                    <p className="text-slate-600">Please try refreshing the page.</p>
+                    <h2 className="text-2xl font-bold text-chrysler-blue-600 mb-2">Failed to Load Data</h2>
+                    <p className="text-amethyst-600">Please try refreshing the page.</p>
                 </div>
             </div>
         );
@@ -72,11 +72,11 @@ export default function Assumptions({ uuid, features }) {
     };
 
     return (
-        <div className="min-h-screen py-8">
+        <div className="min-h-screen py-8 font-montserrat">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-2">Statistical Assumptions Analysis</h2>
-                    <p className="text-slate-600">Review the validation results for each assumption</p>
+                    <h2 className="text-3xl font-bold text-chrysler-blue-600 mb-2">Statistical Assumptions Analysis</h2>
+                    <p className="text-amethyst-600">Review the validation results for each assumption</p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-6">
                     {Object.entries(allAssumptions).map(([key, value], index) => {

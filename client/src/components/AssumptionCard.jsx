@@ -7,6 +7,7 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
     const [currentIndex, setCurrentIndex] = useState(0);
     const isSuccess = data.result === "success";
 
+    const isOutlierCase = assumptionNumber === 6;
     const allFeatures = useMemo(() => [...Object.values(features), 'const'], [features]);
 
     useEffect(() => {
@@ -47,96 +48,115 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
         setCurrentIndex((prev) => (prev + 1) % images.length);
     };
 
-    const isOutlierCase = assumptionNumber === 6;
-    const hasMultiple = isOutlierCase ? images.length > 0 : images.length > 1;
+    const showArrows = images.length > 1;
 
     return (
-        <div className={`group relative flex flex-col my-6 bg-white shadow-sm border border-slate-200 rounded-lg w-96 transition-all duration-500 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`}>
-            <div className="relative h-56 m-2.5 overflow-hidden rounded-md bg-gray-100">
-                {hasMultiple ? (
-                    <div className="relative h-full w-full flex items-center justify-center">
-                        {isOutlierCase ? (
-                            <div className="flex flex-col items-center w-full px-2">
-                                <p className="text-xs text-slate-700 mb-1">
-                                    Feature: {images[currentIndex].feature}
-                                </p>
-                                <div className="flex gap-2 h-full w-full justify-center">
-                                    <img
-                                        src={`data:image/jpeg;base64,${images[currentIndex].before.base64}`}
-                                        alt="Before removing outliers"
-                                        className="h-full w-1/2 object-contain rounded-md"
-                                    />
-                                    <img
-                                        src={`data:image/jpeg;base64,${images[currentIndex].after.base64}`}
-                                        alt="After removing outliers"
-                                        className="h-full w-1/2 object-contain rounded-md"
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <img
-                                src={`data:image/jpeg;base64,${images[currentIndex].base64}`}
-                                alt={`${title} image`}
-                                className="h-full object-contain transition-transform group-hover:scale-105 rounded-md"
-                            />
-                        )}
-
-                        <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white p-1 rounded-full shadow hover:bg-slate-100">
-                            <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white p-1 rounded-full shadow hover:bg-slate-100">
-                            <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                ) : (
-                    <img
-                        src={`data:image/jpeg;base64,${images[0]?.base64}`}
-                        alt={title}
-                        className="w-full h-full object-contain transition-transform group-hover:scale-105 rounded-md"
-                    />
-                )}
-
-                <div className="absolute top-2 right-2 p-1 rounded-full shadow bg-white">
+        <div
+            className={`group relative flex flex-col my-6 bg-white border border-slate-200 rounded-2xl w-[620px] transition-all duration-500 font-montserrat shadow-lg hover:shadow-2xl hover:scale-[1.01] ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+        >
+            {/* Title + Success Icon */}
+            <div className="px-6 pt-6 pb-3 flex items-center justify-between">
+                <h6 className="text-2xl font-semibold text-chrysler-blue-600">{title}</h6>
+                <div className="p-2 rounded-full shadow bg-white">
                     {isSuccess ? (
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     ) : (
-                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     )}
                 </div>
             </div>
 
-            <div className="p-4 space-y-2">
-                <h6 className="mb-1 text-slate-800 text-xl font-semibold">{title}</h6>
-                <p className="text-slate-600 text-sm">
-                    {isSuccess
-                        ? "Assumption holds well. No corrective action needed."
-                        : "Assumption violated. Consider transformation or alternative modeling strategies."}
-                </p>
+            {/* Image Section */}
+            <div className="relative h-[380px] mx-6 mb-6 overflow-hidden rounded-xl bg-slate-50 shadow-inner">
+                {isOutlierCase ? (
+                    <div className="flex flex-col items-center w-full h-full relative">
+                        {/* Feature Pill */}
+                        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 px-4 py-1 rounded-full text-sm font-medium bg-white text-amethyst-500 shadow">
+                            Feature: {images[currentIndex]?.feature}
+                        </div>
 
-                {data.features?.length > 0 && (
-                    <div>
-                        <p className="font-medium text-sm text-slate-700">Involved Features:</p>
-                        <ul className="list-disc pl-5 text-sm text-slate-600 max-h-24 overflow-y-auto">
-                            {data.features.map((f, i) => <li key={i}>{f}</li>)}
-                        </ul>
+                        <div className="flex justify-center items-center w-full h-full gap-4 px-4 mt-6">
+                            {['before', 'after'].map((type) => (
+                                <div
+                                    key={type}
+                                    className="relative group w-1/2 h-[280px] rounded-lg overflow-hidden border border-slate-200 bg-white shadow-md hover:shadow-xl transition duration-300 transform hover:scale-105"
+                                >
+                                    <img
+                                        src={`data:image/jpeg;base64,${images[currentIndex]?.[type]?.base64}`}
+                                        alt={`${type} image`}
+                                        className="w-full h-full object-contain transition-opacity duration-300"
+                                    />
+                                    <div className="absolute bottom-0 w-full text-center text-xs bg-white/90 py-1 font-semibold text-slate-600">
+                                        {type === 'before' ? 'Before Outlier Treatment' : 'After Outlier Treatment'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {showArrows && (
+                            <>
+                                <button
+                                    onClick={handlePrev}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-amethyst-300"
+                                >
+                                    <svg className="w-5 h-5 text-amethyst-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={handleNext}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-amethyst-300"
+                                >
+                                    <svg className="w-5 h-5 text-amethyst-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </>
+                        )}
                     </div>
+                ) : (
+                    <>
+                        <img
+                            src={`data:image/jpeg;base64,${images[currentIndex]?.base64}`}
+                            alt={`${title} image`}
+                            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {showArrows && (
+                            <>
+                                <button
+                                    onClick={handlePrev}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-amethyst-300"
+                                >
+                                    <svg className="w-5 h-5 text-amethyst-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={handleNext}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-amethyst-300"
+                                >
+                                    <svg className="w-5 h-5 text-amethyst-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </>
+                        )}
+                    </>
                 )}
             </div>
 
-            <div className="px-4 pb-4 pt-0 mt-2">
-                <button className="rounded-md bg-slate-800 py-2 px-4 text-sm text-white hover:scale-105 hover:bg-slate-700">
-                    View Details
-                </button>
+
+            {/* Description Section */}
+            <div className="px-6 pb-6 text-sm text-amethyst-600">
+                {isSuccess
+                    ? "Assumption holds well. No corrective action needed."
+                    : "Assumption violated. Consider transformation or alternative modeling strategies."}
             </div>
         </div>
     );
