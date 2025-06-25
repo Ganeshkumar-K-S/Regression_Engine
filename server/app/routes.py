@@ -6,6 +6,7 @@ import app.cache as cache
 import app.utils as utils
 import numpy as np
 import uuid
+from itertools import chain
 
 engine = Blueprint('engine', __name__)
 
@@ -281,7 +282,8 @@ def api_assumptions():
         print(target)
         encoded_df=utils.concatenate_df(model.y_train,model.X_train)
         print(encoded_df)
-        test_result_1=utils.linearity_test(encoded_df,target,list(model.X_train.columns))
+        flattened = [f"{key}_{value}" for key, values in model.getOneHotMappings().items() for value in values]
+        test_result_1=utils.linearity_test(encoded_df,target,list(model.X_train.columns),flattened)
         print(test_result_1)
         utils.visualize_linearity(uid, encoded_df, target,list(model.X_train.columns))
 

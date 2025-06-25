@@ -127,11 +127,11 @@ def get_correlation_feature(df, target, feature):
             res[feat] = 0
     return res
 #assumption-1 Linearity of feature-target relationship
-def linearity_test(df, target, feature):
+def linearity_test(df, target, feature, one_hot):
     failed = []
     res = get_correlation_feature(df, target, feature)
     for key, value in res.items():
-        if key=="const":
+        if key=="const" or key in one_hot:
             continue
         if abs(value) < 0.1:
             failed.append(key)
