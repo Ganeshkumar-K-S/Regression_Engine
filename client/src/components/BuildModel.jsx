@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-export default function ModelBuilder() {
+export default function ModelBuilder({ apiDone, setApiDone, accuracy, setAccuracy , completedSteps , setCompletedSteps}) {
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState('⏳ Starting...');
-    const [completedSteps, setCompletedSteps] = useState(false);
-    const [apiDone, setApiDone] = useState(false);
     const [error, setError] = useState('');
 
     const capitalizeFirst = (str) => {
@@ -12,9 +10,8 @@ export default function ModelBuilder() {
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
-    // Generate total duration (30–45s) and distribute it across steps using weights
-    const totalDuration = Math.floor(Math.random() * 15000) + 30000; // 30–45 seconds
-    const weights = [1, 1, 1.2, 1.5, 1.3]; // proportional time per step
+    const totalDuration = Math.floor(Math.random() * 5000); // ensure minimum duration
+    const weights = [1, 1, 1.2, 1.5, 1.3];
     const weightSum = weights.reduce((a, b) => a + b, 0);
 
     const steps = [
@@ -31,7 +28,6 @@ export default function ModelBuilder() {
         const interval = setInterval(() => {
             const elapsed = Date.now() - startTime;
             const percent = (elapsed / totalDuration) * 100;
-
             setProgress(Math.min(percent, 100));
         }, 200);
 
@@ -53,7 +49,10 @@ export default function ModelBuilder() {
                 return res.json();
             })
             .then((data) => {
+                console.log(data);
+                setAccuracy(data.r2_score);
                 setApiDone(true);
+                console.log(data.r2_score);
                 setStatusText(`✅ ${capitalizeFirst(data.message || 'Model created successfully!')}`);
             })
             .catch((err) => {
@@ -68,7 +67,7 @@ export default function ModelBuilder() {
     return (
         <div className="w-full max-w-6xl mx-auto mt-20 p-6">
             <div className="text-lg font-semibold text-center mb-4 text-chrysler-blue-700 font-montserrat">
-                {error ? `❌ ${error}` : completedSteps && apiDone ? '🎉 Model Ready!' : statusText}
+                {error ? `❌ ${error}` : progress >= 100 ? '🎉 Model Ready!' : statusText}
             </div>
 
             <div className="relative w-full h-6 rounded-full overflow-hidden bg-gray-300 shadow-md">

@@ -13,7 +13,10 @@ export default function FeatureSelector({
   nullAttributes,
   setNullAttributes,
   isLocked,
-  setIsLocked
+  setIsLocked,
+  nullTreated,
+  setNullTreated,
+  setStartClicked
 }) {
   const featureRefs = useRef([]);
   const targetRef = useRef(null);
@@ -48,39 +51,49 @@ export default function FeatureSelector({
 
   const handleStart = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/gettargetfeature', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ target, feature: features }),
-      });
+        // Step 1: Send target and feature to backend
+        const res = await fetch('http://localhost:5000/api/gettargetfeature', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ target, feature: features }),
+        });
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
+        const data = await res.json();
+        if (data.error) {
+            setTargetError(data.error);
+            return;
+        }
 
-      const data = await res.json();
-      if (data.error) {
-        setTargetError(data.error);
-        return;
-      }
+        // Step 2: Fetch null value info
+        const nullRes = await fetch('http://localhost:5000/api/getnull', {
+            credentials: 'include',
+        });
 
-      const nullRes = await fetch('http://localhost:5000/api/getnull', {
-        credentials: 'include'
-      });
+        if (!nullRes.ok) throw new Error(`HTTP error! status: ${nullRes.status}`);
 
-      if (!nullRes.ok) throw new Error(`HTTP error! status: ${nullRes.status}`);
-
-      const nullData = await nullRes.json();
-
-      if (nullData.error) setTargetError(nullData.error);
-      else {
-        setNullAttributes(nullData);
-        setIsLocked(true);
-      }
+        const nullData = await nullRes.json();
+        setStartClicked(true); 
+        if (nullData.error) {
+            setTargetError(nullData.error);
+        } else {
+            setNullAttributes(nullData);
+            setIsLocked(true);
+            if (Object.keys(nullData).length === 0 && nullData.constructor === Object) {
+                setNullTreated(true);
+            }
+        }
     } catch (err) {
-      console.error('Unexpected error:', err);
-      setTargetError(`An unexpected error occurred: ${err.message}`);
+        console.error('Unexpected error:', err);
+        setTargetError(`An unexpected error occurred: ${err.message}`);
     }
   };
+
 
   const removeButton = (onClickHandler) => (
     <button

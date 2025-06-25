@@ -13,7 +13,11 @@ import seaborn as sns
 from matplotlib import font_manager
 import os
 import matplotlib
+from matplotlib.colors import LinearSegmentedColormap
 matplotlib.use('Agg')
+from sklearn.model_selection import KFold
+from sklearn.metrics import r2_score as r2
+from sklearn.metrics import mean_absolute_error as mae
 
 def treat_null(df,col,method,value=None):
     try:
@@ -89,7 +93,6 @@ def treat_outliers(df, method, features,model=None):
                 outlier_indices.update(outliers_in_col)
 
             outliers = list(outlier_indices)
-            print(len(outliers))
         elif method == 3:
             # Z-score method
             zscores = df.select_dtypes(include=[np.number]).apply(zscore)
@@ -139,15 +142,16 @@ def independence_of_errors_test(model):
     test_val=dbw(model.resid)
     return {
         'result':'success' if 1.5<test_val<2.5 else 'failure',
-        'test_val_dbw':test_val
+        'test_val_dbw':float(test_val)
     }
 
 #assumption-3 Normality of errors
 def normality_of_errors_test(model):
     stat,p=jb(model.resid)
+    
     return {
         'result':'success' if p > 0.05 else 'failure',
-        'test_val_jb':p
+        'test_val_jb':float(p)
     }
 
 #assumption-4 No Perfect Multicollinearity
@@ -158,13 +162,13 @@ def perfect_multicollinearity_test(df, features, threshold=5.0):
     vif_values = {}
     for i in range(1,X.shape[1]):  # skip the constant
         vif_score = vif(X.values, i)
-        vif_values[features[i-1]] = round(vif_score, 1)
+        vif_values[features[i-1]] = float(round(vif_score, 1))
 
     high_vif = [feat for feat, v in vif_values.items() if v > threshold]
 
     return {
         'result': 'success' if not high_vif else 'failure',
-        'vif': vif_values,
+        'vif':vif_values,
         'high_vif_features': high_vif
     }
 
@@ -180,8 +184,8 @@ def equal_variance_test(model, alpha=0.05):
 
         return {
             "result": "failure" if lm_pval < alpha else "success",
-            "lm_stat": lm_stat,
-            "f_stat": f_stat,
+            "lm_stat": float(lm_stat),
+            "f_stat": float(f_stat),
             "p_value": lm_pval
         }
 
@@ -329,6 +333,43 @@ def preprocess_onehot(x, ignore_first=False):
 
     return res, high_cardinality_cols, onehot_mapping,features
 
+def visualize_before_outliers(uid,features,df):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+    for feature in features:
+        if not pd.api.types.is_numeric_dtype(df[feature]):
+            continue  # Skip non-numeric columns
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(data=df[feature] , color="#a86de7")
+        plt.title(f'{feature}')
+        plt.tight_layout()
+        save_dir = os.path.join(base_dir, 'static', 'images','before_removing_outliers')
+        os.makedirs(save_dir, exist_ok=True)
+
+        filename = os.path.join(save_dir, f'{uid}{feature}.jpeg')
+        plt.savefig(filename, dpi=300)
+        plt.close()
+
+def visualize_after_outliers(uid,features,df):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
+    font_prop = font_manager.FontProperties(fname=font_path)
+
+    for feature in features:
+        if not pd.api.types.is_numeric_dtype(df[feature]):
+            continue  # Skip non-numeric columns
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(data=df[feature] , color="#a86de7")
+        plt.title(f'{feature}')
+        plt.tight_layout()
+        save_dir = os.path.join(base_dir, 'static', 'images','after_removing_outliers')
+        os.makedirs(save_dir, exist_ok=True)
+
+        filename = os.path.join(save_dir, f'{uid}{feature}.jpeg')
+        plt.savefig(filename, dpi=300)
+        plt.close()
 
 def visualize_linearity(uid, df, target, features):
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -413,7 +454,8 @@ def plot_correlation_heatmap(uid, df, features):
 
     plt.figure(figsize=(8, 6))
     corr_matrix = df[features].corr()
-    sns.heatmap(corr_matrix, annot=True, cmap='crest', center=0)
+    custom_cmap = LinearSegmentedColormap.from_list("custom_purple", ["#ffffff", "#a86de7"])
+    sns.heatmap(corr_matrix, annot=True, cmap = 'Purples' , center=0)
     plt.title("Correlation Matrix (Check Multicollinearity)",fontproperties=font_prop)
     ax = plt.gca()
     for label in ax.get_xticklabels() + ax.get_yticklabels():
@@ -448,6 +490,32 @@ def plot_equal_variance(uid,y_pred, residuals):
     filename = os.path.join(save_dir, f'{uid}.jpeg')
     plt.savefig(filename, dpi=300)
     plt.close()
+
+def cross_validation(X,y):
+    kf=KFold(n_splits=5, shuffle=True, random_state=42)
+    r2s=[]
+    maes=[]
+
+    for train_ind, val_ind in kf.split(X,y):
+        X_train,y_train=X.iloc[train_ind],y.iloc[train_ind]
+        X_val, y_val=X.iloc[val_ind], y.iloc[val_ind]
+
+        model=sm.OLS(y_train,X_train).fit()
+
+        r2s.append(r2(y_val,model.predict(X_val),))
+        maes.append(mae(y_val, model.predict(X_val),))
+    
+    res = {
+        'all_r2s': [round(x, 3) for x in r2s],
+        'cross_r2': f'{round(np.mean(r2s), 3)} ± {round(np.std(r2s), 3)}',
+
+        'all_maes': [round(x, 3) for x in maes],
+        'cross_mae': f'{round(np.mean(maes), 3)} ± {round(np.std(maes), 3)}'
+    }
+
+    return res
+
+
 
 
 def concatenate_df(df1,df2):

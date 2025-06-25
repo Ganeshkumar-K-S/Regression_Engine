@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, request, jsonify, current_app,session
+from flask import Blueprint, request, jsonify, current_app,session , send_from_directory , url_for
 from app.utils import get_attributes,to_dataframe,from_dataframe
 from app.regression import Model,generateModel,generateGLSModel
 import app.cache as cache
@@ -14,7 +14,8 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            raise KeyError("uid not in session")
+            session['uid']='u0001'
+            #raise KeyError("uid not in session")
         uid=session.get('uid')
         cache.cache[uid]={}
         cache.cache[uid]['uploads_path'] = os.path.join(upload_dir, f"{name}.{format}")
@@ -76,23 +77,48 @@ def upload_file():
         print(e)
         return jsonify({'error': str(e)}), 501
 
+import os
+import shutil
+
 @engine.route('/clearcache', methods=['POST', 'DELETE'])
 def clear_cache():
     try:
         if 'uid' not in session:
             raise ValueError('session does not have uid')
-        
+
         uid = session.get('uid')
+        print(f"UID in session: {uid}")  # ✅ Debug print
+
+        # Delete uploaded file if it exists
         if uid in cache.cache and 'uploads_path' in cache.cache[uid]:
             file_path = cache.cache[uid]['uploads_path']
+            print(f"Trying to delete uploaded file: {file_path}")  # ✅ Debug print
             if os.path.exists(file_path):
                 os.remove(file_path)
             else:
-                raise FileNotFoundError("File not found")
+                print("File not found")
+
+        # Recursively delete files with uid in their name under /static/images
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        images_dir = os.path.join(base_dir, 'static', 'images')
+
+        if os.path.exists(images_dir):
+            for root, dirs, files in os.walk(images_dir):
+                for file_name in files:
+                    if uid in file_name:
+                        file_path = os.path.join(root, file_name)
+                        try:
+                            os.remove(file_path)
+                            print(f"Deleted: {file_path}")  # ✅ Confirm deletion
+                        except Exception as e:
+                            print(f"Error deleting {file_path}: {e}")
+
+        # Clear cache and session
         cache.cache.pop(uid, None)
         session.pop('uid', None)
         session.clear()
-        return jsonify({'message': 'Cache and file cleared successfully'}), 200
+
+        return jsonify({'message': 'Cache, file, and UID-related images cleared successfully'}), 200
 
     except ValueError as e:
         print(e)
@@ -105,6 +131,8 @@ def clear_cache():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
+
+
     
 @engine.route('/gettargetfeature', methods=['POST'])
 def get_target_feature():
@@ -203,6 +231,7 @@ def make_model():
         df=cache.cache[uid]['df']
         cache.cache[uid]['model']=Model(df,target=target,features=feature)
         model=cache.cache[uid]['model']
+        print(model.getMetrics()['adjusted_R2'])
         return jsonify({
             "message" : "model created successfully",
             "r2_score": model.getMetrics()['adjusted_R2']}),200
@@ -217,9 +246,12 @@ def api_treat_outliers():
       
         uid = session.get('uid')
         features=cache.cache[uid]['feature']
+        df=cache.cache[uid]['df']
+        utils.visualize_before_outliers(uid,features,df)
         cache.cache[uid]['df'] = utils.treat_outliers(
                 cache.cache[uid]['df'],  2, features
             )
+        utils.visualize_after_outliers(uid,features,cache.cache[uid]['df'])
         return jsonify({"message" : "Outliers treated successfully"}),200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -264,7 +296,7 @@ def api_assumptions():
         # assumption - 3
         test_result_3=utils.normality_of_errors_test(model.getModel())    
 
-        utils.plot_equal_variance(uid, y_pred, residuals)
+        utils.plot_residual_histogram(uid,residuals)
 
         target_transform=(test_result_3['result']=="failure")
         
@@ -297,11 +329,36 @@ def api_assumptions():
             "assumption_4":test_result_4,
             "assumption_5":test_result_5
         }
+        
+        print(res)
+        
         return jsonify(res)
         
     except Exception as e:
         return jsonify({"Error":str(e)})
-    
+
+@engine.route('/cross-validation', methods=['GET'])
+def cross_validation_api():
+    try:
+        if 'uid' not in session:
+            raise KeyError("uid not in session")
+        uid=session.get("uid")
+        
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        
+        model=cache.cache[uid]['model']
+
+        result= utils.cross_validation(model.X_train,model.y_train)
+
+        return result
+
+    except Exception as e:
+        return jsonify({"Error":str(e)})   
+
 @engine.route('/getinference')
 def get_inference():
     try:
@@ -338,5 +395,63 @@ def get_prediction():
         }
         return jsonify(result)
 
+    except Exception as e:
+        return jsonify({"Error":str(e)})
+
+import base64
+
+def encode_image_to_base64(file_path):
+    with open(file_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+    
+@engine.route('/get-images', methods=['POST'])
+def get_images_by_prefix():
+    try:
+        data = request.json
+        folder = data.get('folderName')
+        uuid = data.get('uuid')
+        features = data.get('features', [])
+
+        if not folder or not uuid or not features:
+            return jsonify({"error": "Missing required fields"}), 400
+
+
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        static_folder = os.path.join(base_dir,'static', 'images', folder)
+        if not os.path.exists(static_folder):
+            return jsonify({"error": "Folder does not exist"}), 404
+
+        matched_images = []
+        for file in os.listdir(static_folder):
+            for feature in features:
+                if file.startswith(f"{uuid}{feature}") and file.endswith(".jpeg"):
+                    file_path = os.path.join(static_folder, file)
+                    base64_data = encode_image_to_base64(file_path)
+                    matched_images.append({
+                        "filename": file,
+                        "base64": base64_data
+                    })
+
+        return jsonify(matched_images)
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
+
+    
+@engine.route('/getmetrics')
+def get_metrics():
+    try:
+        if 'uid' not in session:
+            raise KeyError("uid not in the session")
+        data=request.get_json()
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        model=cache.cache[uid]['model']
+        return jsonify(model.getMetrics())
     except Exception as e:
         return jsonify({"Error":str(e)})

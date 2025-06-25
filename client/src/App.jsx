@@ -5,6 +5,7 @@ import DropFiles from './components/DropFiles';
 import DragDropWrapper from './components/DragDropWrapper';
 import NullHandling from './components/NullHandling';
 import BuildModel from './components/BuildModel';
+import Assumptions from './components/Assumptions';
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -14,7 +15,11 @@ export default function App() {
   const [target, setTarget] = useState(null);
   const [targetError, setTargetError] = useState('');
   const [nullAttributes, setNullAttributes] = useState({});
+  const [startClicked, setStartClicked] = useState(false);
   const [nullTreated , setNullTreated] = useState(false);
+  const [apiDone, setApiDone] = useState(false); 
+  const [accuracy , setAccuracy] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState(false);
 
   useEffect(() => {
     const clearCache = () => {
@@ -60,19 +65,41 @@ export default function App() {
         setTargetError={setTargetError}
         nullAttributes={nullAttributes}
         setNullAttributes={setNullAttributes}
+        nullTreated={nullTreated}
+        setNullTreated={setNullTreated}
+        setStartClicked={setStartClicked}
       />
-      {Object.keys(attributes).length > 0 && Object.keys(nullAttributes).length > 0 && (
-        <NullHandling
-          nullAttributes={Object.entries(nullAttributes)}
-          attributes={attributes}
-          nullTreated={nullTreated}
-          setNullTreated={setNullTreated}
-        />
-      )}
+      {Object.keys(attributes).length > 0 &&
+        Object.keys(nullAttributes).length > 0 &&
+        Object.keys(nullAttributes).length !== 0 &&
+        (
+          <NullHandling
+            nullAttributes={Object.entries(nullAttributes)}
+            attributes={attributes}
+            nullTreated={nullTreated}
+            setNullTreated={setNullTreated}
+          />
+        )}
 
-      {Object.keys(attributes).length > 0 && Object.keys(nullAttributes).length > 0 && nullTreated && (
-        <BuildModel />
-      )}
+        {Object.keys(attributes).length > 0 &&
+        ((Object.keys(nullAttributes).length === 0 && startClicked) || nullTreated) && (
+          <BuildModel
+            apiDone={apiDone}
+            setApiDone={setApiDone}
+            accuracy={accuracy}
+            setAccuracy={setAccuracy}
+            completedSteps={completedSteps}
+            setCompletedSteps={setCompletedSteps}
+          />
+        )}
+
+        {Object.keys(attributes).length > 0 &&
+          ((Object.keys(nullAttributes).length === 0 && startClicked)|| nullTreated) &&
+          accuracy !== 0 &&
+          completedSteps && (
+            <Assumptions uuid={uploadUUID} features={features} />
+        )}
+
     </div>
   );
 }

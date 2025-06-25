@@ -15,7 +15,10 @@ export default function DragDropWrapper({
   targetError,
   setTargetError,
   nullAttributes,
-  setNullAttributes
+  setNullAttributes,
+  nullTreated,
+  setNullTreated,
+  setStartClicked
 }) {
   const [isLocked, setIsLocked] = useState(false);
 
@@ -86,6 +89,9 @@ export default function DragDropWrapper({
           setNullAttributes={setNullAttributes}
           isLocked={isLocked}
           setIsLocked={setIsLocked}
+          nullTreated={nullTreated}
+          setNullTreated={setNullTreated}
+          setStartClicked={setStartClicked}
         />
       )}
     </DragDropContext>
