@@ -6,6 +6,7 @@ import DragDropWrapper from './components/DragDropWrapper';
 import NullHandling from './components/NullHandling';
 import BuildModel from './components/BuildModel';
 import Assumptions from './components/Assumptions';
+import ModelInference from './components/ModelInference';
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -20,6 +21,7 @@ export default function App() {
   const [apiDone, setApiDone] = useState(false); 
   const [accuracy , setAccuracy] = useState(0);
   const [completedSteps, setCompletedSteps] = useState(false);
+  const [assumptionDone , setAssumptionDone] = useState(false);
 
   useEffect(() => {
     const clearCache = () => {
@@ -97,9 +99,17 @@ export default function App() {
           ((Object.keys(nullAttributes).length === 0 && startClicked)|| nullTreated) &&
           accuracy !== 0 &&
           completedSteps && (
-            <Assumptions uuid={uploadUUID} features={features} />
+            <Assumptions uuid={uploadUUID} features={features} assumptionDone={assumptionDone} setAssumptionDone={setAssumptionDone}/>
         )}
 
+        {Object.keys(attributes).length > 0 &&
+          ((Object.keys(nullAttributes).length === 0 && startClicked)|| nullTreated) &&
+          accuracy !== 0 &&
+          completedSteps && 
+          assumptionDone && (
+            <ModelInference target={target} />
+          )
+        }
     </div>
   );
 }

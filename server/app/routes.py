@@ -440,12 +440,11 @@ def get_images_by_prefix():
         return jsonify({"error": str(e)}), 500
 
     
-@engine.route('/getmetrics')
+@engine.get('/getmetrics')
 def get_metrics():
     try:
         if 'uid' not in session:
             raise KeyError("uid not in the session")
-        data=request.get_json()
         uid=session.get("uid")
 
         if uid not in cache.cache:

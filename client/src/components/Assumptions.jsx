@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import AssumptionCard from './AssumptionCard';
 import SkeletonCard from './SkeletonCard';
 
-export default function Assumptions({ uuid, features }) {
+export default function Assumptions({ uuid, features , assumptionDone , setAssumptionDone}) {
     const [assumptionsData, setAssumptionsData] = useState(null);
     const [outlierData, setOutlierData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +26,7 @@ export default function Assumptions({ uuid, features }) {
                 const json2 = await res2.json();
                 setAssumptionsData(json1);
                 setOutlierData({ result: "success", ...json2 });
+                setAssumptionDone(true);
             } catch (e) {
                 console.error("Failed to load assumption/outlier data", e);
             } finally {
@@ -46,7 +47,7 @@ export default function Assumptions({ uuid, features }) {
                     </div>
                     <div className="flex flex-wrap justify-center gap-6">
                         {[...Array(6)].map((_, index) => (
-                            <SkeletonCard key={index} features={features} />
+                            <SkeletonCard isOutlierCase={index === 5} />
                         ))}
                     </div>
                 </div>

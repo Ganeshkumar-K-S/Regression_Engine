@@ -78,11 +78,15 @@ export default function BuildModel({ apiDone, setApiDone, accuracy, setAccuracy,
                     <Skeleton height={24} width="100%" />
                 ) : (
                     <div
-                        className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300 ease-linear"
-                        style={{ width: `${progress}%` }}
+                        className="absolute top-0 bottom-0 left-0 transition-all duration-300 ease-linear"
+                        style={{
+                            width: `${progress}%`,
+                            backgroundImage: 'linear-gradient(to right, var(--color-chrysler-blue-700), var(--color-amethyst-500))',
+                        }}
                     />
                 )}
             </div>
+
 
             <div className="text-center mt-3 text-sm text-amethyst-700 font-montserrat">
                 {showSkeleton ? <Skeleton width={40} /> : `${Math.floor(progress)}%`}
