@@ -1,12 +1,12 @@
 import os
-from flask import Blueprint, request, jsonify, current_app,session , send_from_directory , url_for
+from flask import Blueprint, request, jsonify, current_app,session 
 from app.utils import get_attributes,to_dataframe,from_dataframe
-from app.regression import Model,generateModel,generateGLSModel
+from app.regression import Model
 import app.cache as cache
 import app.utils as utils
+from app.utils import encode_image_to_base64
 import numpy as np
 import uuid
-from itertools import chain
 
 engine = Blueprint('engine', __name__)
 
@@ -76,9 +76,6 @@ def upload_file():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 501
-
-import os
-import shutil
 
 @engine.route('/clearcache', methods=['POST', 'DELETE'])
 def clear_cache():
@@ -208,9 +205,6 @@ def api_treat_null():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-
-
-
 @engine.route('/makemodel',methods=['GET'])
 def make_model():
     try: 
@@ -398,12 +392,6 @@ def get_prediction():
 
     except Exception as e:
         return jsonify({"Error":str(e)})
-
-import base64
-
-def encode_image_to_base64(file_path):
-    with open(file_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
     
 @engine.route('/get-images', methods=['POST'])
 def get_images_by_prefix():
@@ -453,5 +441,26 @@ def get_metrics():
             raise KeyError('model is not in the cache')
         model=cache.cache[uid]['model']
         return jsonify(model.getMetrics())
+    except Exception as e:
+        return jsonify({"Error":str(e)})
+
+@engine.get('/getfeaturevalues')
+def get_feature_values():
+    try:
+        if 'uid' not in session:
+            raise KeyError("uid not in the session")
+        uid=session.get("uid")
+
+        if uid not in cache.cache:
+            raise KeyError('Uid not in cache')
+        if 'model' not in cache.cache[uid]:
+            raise KeyError('model is not in the cache')
+        model=cache.cache[uid]['model']
+        res1=model.getOneHotMappings()
+        res2 = model.getBayesMappings()
+        res2 = {feature: list(mapping.keys()) for feature, mapping in res2.items()}
+        res=res1 | res2
+        return jsonify(res)
+
     except Exception as e:
         return jsonify({"Error":str(e)})

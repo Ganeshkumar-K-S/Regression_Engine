@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import 'react-tooltip/dist/react-tooltip.css';
 
-export default function ModelInference({ target }) {
+export default function ModelInference({ target , inferenceDone , setInferenceDone}) {
     const [inferenceData, setInferenceData] = useState(null);
     const [r2Score, setR2Score] = useState(null);
     const [error, setError] = useState('');
@@ -25,6 +25,7 @@ export default function ModelInference({ target }) {
             .then(data => {
                 if (data.Error) throw new Error(data.Error);
                 setR2Score(data.R2);
+                setInferenceDone(true);
             })
             .catch(err => setError(err.message));
     }, []);

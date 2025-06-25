@@ -20,6 +20,12 @@ from sklearn.metrics import r2_score as r2
 from sklearn.metrics import mean_absolute_error as mae
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
+import base64
+
+def encode_image_to_base64(file_path):
+    with open(file_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+    
 def treat_null(df,col,method,value=None):
     try:
         if method==1: #drop null values

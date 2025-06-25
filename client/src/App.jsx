@@ -7,6 +7,8 @@ import NullHandling from './components/NullHandling';
 import BuildModel from './components/BuildModel';
 import Assumptions from './components/Assumptions';
 import ModelInference from './components/ModelInference';
+import PredictionForm from './components/PredictionForm';
+import GenerateReport from './components/GenerateReport';
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -22,6 +24,7 @@ export default function App() {
   const [accuracy , setAccuracy] = useState(0);
   const [completedSteps, setCompletedSteps] = useState(false);
   const [assumptionDone , setAssumptionDone] = useState(false);
+  const [inferenceDone , setInferenceDone] = useState(false);
 
   useEffect(() => {
     const clearCache = () => {
@@ -107,7 +110,27 @@ export default function App() {
           accuracy !== 0 &&
           completedSteps && 
           assumptionDone && (
-            <ModelInference target={target} />
+            <ModelInference target={target} inferenceDone={inferenceDone} setInferenceDone={setInferenceDone}/>
+          )
+        }
+
+        {Object.keys(attributes).length > 0 &&
+          ((Object.keys(nullAttributes).length === 0 && startClicked)|| nullTreated) &&
+          accuracy !== 0 &&
+          completedSteps && 
+          assumptionDone && 
+          inferenceDone && (
+            <PredictionForm attributes={attributes} features={Object.values(features)} target={target} />
+          )
+        }
+
+        {Object.keys(attributes).length > 0 &&
+          ((Object.keys(nullAttributes).length === 0 && startClicked)|| nullTreated) &&
+          accuracy !== 0 &&
+          completedSteps && 
+          assumptionDone && 
+          inferenceDone && (
+            <GenerateReport />
           )
         }
     </div>
