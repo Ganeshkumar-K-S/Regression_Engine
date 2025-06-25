@@ -292,14 +292,14 @@ def api_assumptions():
         print(test_result_2)
         utils.visualize_independence_error(uid, y_pred, residuals)
 
-        fix_ind=(test_result_2['result']=='failure')
+        # fix_ind=(test_result_2['result']=='failure')
         
         # assumption - 3
         test_result_3=utils.normality_of_errors_test(model.getModel())    
 
         utils.plot_residual_histogram(uid,residuals)
 
-        target_transform=(test_result_3['result']=="failure")
+        # target_transform=(test_result_3['result']=="failure")
         
         # assumption - 4
         test_result_4=utils.perfect_multicollinearity_test(model.X_train,list(model.X_train.columns))
@@ -311,16 +311,16 @@ def api_assumptions():
         test_result_5=utils.equal_variance_test(model.getModel())
         utils.plot_equal_variance(uid,y_pred,residuals)
 
-        target_transform=(test_result_5['result']=="failure")
+        # target_transform=(test_result_5['result']=="failure")
 
-        if target_transform:
-            model.y_train=np.log(model.y_train)
-            model.y_test=np.log(model.y_test)
+        # if target_transform:
+        #     model.y_train=np.log(model.y_train)
+        #     model.y_test=np.log(model.y_test)
 
-        if fix_ind:
-            model.setModel(generateGLSModel(model.y_train,model.X_train))
-        elif target_transform:
-            model.setModel(generateModel(model.y_train,model.X_train))
+        # if fix_ind:
+        #     model.setModel(generateGLSModel(model.y_train,model.X_train))
+        # elif target_transform:
+        #     model.setModel(generateModel(model.y_train,model.X_train))
             
         
         res={
