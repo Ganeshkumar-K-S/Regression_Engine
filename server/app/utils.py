@@ -18,6 +18,7 @@ matplotlib.use('Agg')
 from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score as r2
 from sklearn.metrics import mean_absolute_error as mae
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 def treat_null(df,col,method,value=None):
     try:
@@ -130,6 +131,8 @@ def linearity_test(df, target, feature):
     failed = []
     res = get_correlation_feature(df, target, feature)
     for key, value in res.items():
+        if key=="const":
+            continue
         if abs(value) < 0.1:
             failed.append(key)
     if not failed:
@@ -156,21 +159,51 @@ def normality_of_errors_test(model):
 
 #assumption-4 No Perfect Multicollinearity
 def perfect_multicollinearity_test(df, features, threshold=5.0):
-    X = df[features]
+    X = df[features].copy()
+
+    # Drop constant columns (zero variance)
+    constant_cols = [col for col in X.columns if X[col].std() == 0]
+    X.drop(columns=constant_cols, inplace=True)
+
+    # Drop one dummy column from each one-hot group
+    dummy_like = [col for col in X.columns if '_' in col]
+    prefix_groups = {}
+    for col in dummy_like:
+        prefix = col.split('_')[0]
+        prefix_groups.setdefault(prefix, []).append(col)
+
+    dropped_dummies = []
+    for group in prefix_groups.values():
+        if len(group) > 1:
+            dropped_dummies.append(group[0])
+            X.drop(columns=[group[0]], inplace=True)
+
+    # Add constant
     X = sm.add_constant(X)
 
     vif_values = {}
-    for i in range(1,X.shape[1]):  # skip the constant
-        vif_score = vif(X.values, i)
-        vif_values[features[i-1]] = float(round(vif_score, 1))
+    high_vif = []
 
-    high_vif = [feat for feat, v in vif_values.items() if v > threshold]
+    for i in range(1, X.shape[1]):  # skip the constant
+        try:
+            vif_score = variance_inflation_factor(X.values, i)
+            col_name = X.columns[i]
+            vif_values[col_name] = round(vif_score, 1)
+            if vif_score > threshold:
+                high_vif.append(col_name)
+        except (np.linalg.LinAlgError, ZeroDivisionError):
+            col_name = X.columns[i]
+            vif_values[col_name] = float('inf')
+            high_vif.append(col_name)
 
     return {
         'result': 'success' if not high_vif else 'failure',
-        'vif':vif_values,
-        'high_vif_features': high_vif
+        'vif': vif_values,
+        'high_vif_features': high_vif,
+        'removed_constant_features': constant_cols,
+        'removed_dummy_features': dropped_dummies
     }
+
 
 def equal_variance_test(model, alpha=0.05):
     try:

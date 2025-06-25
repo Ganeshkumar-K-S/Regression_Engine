@@ -14,8 +14,7 @@ def send_attributes(name, format):
     try:
         upload_dir = current_app.config['UPLOAD_FOLDER']
         if 'uid' not in session:
-            session['uid']='u0001'
-            #raise KeyError("uid not in session")
+            raise KeyError("uid not in session")
         uid=session.get('uid')
         cache.cache[uid]={}
         cache.cache[uid]['uploads_path'] = os.path.join(upload_dir, f"{name}.{format}")
