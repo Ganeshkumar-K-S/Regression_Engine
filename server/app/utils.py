@@ -410,12 +410,14 @@ def visualize_after_outliers(uid,features,df):
         plt.savefig(filename, dpi=300)
         plt.close()
 
-def visualize_linearity(uid, df, target, features):
+def visualize_linearity(uid, df, target, features,onehot):
     base_dir = os.path.abspath(os.path.dirname(__file__))
     font_path = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Regular.ttf')
     font_prop = font_manager.FontProperties(fname=font_path)
 
     for feature in features:
+        if feature == 'const' or feature in onehot:
+            continue
         plt.figure(figsize=(6, 4))
         sns.regplot(data=df, 
                     x=feature, 
@@ -434,7 +436,7 @@ def visualize_linearity(uid, df, target, features):
 
         filename = os.path.join(save_dir, f'{uid}{feature}vs{target}.jpeg')
         plt.savefig(filename, dpi=300)
-        plt.close() 
+        plt.close()
 
 def visualize_independence_error(uid, y_pred, residuals):
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -494,7 +496,7 @@ def plot_correlation_heatmap(uid, df, features):
     plt.figure(figsize=(8, 6))
     corr_matrix = df[features].corr()
     custom_cmap = LinearSegmentedColormap.from_list("custom_purple", ["#ffffff", "#a86de7"])
-    sns.heatmap(corr_matrix, annot=True, cmap = 'Purples' , center=0)
+    sns.heatmap(corr_matrix, cmap = 'Purples' , center=0)
     plt.title("Correlation Matrix (Check Multicollinearity)",fontproperties=font_prop)
     ax = plt.gca()
     for label in ax.get_xticklabels() + ax.get_yticklabels():

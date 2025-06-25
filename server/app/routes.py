@@ -279,7 +279,7 @@ def api_assumptions():
         flattened = [f"{key}_{value}" for key, values in model.getOneHotMappings().items() for value in values]
         test_result_1=utils.linearity_test(encoded_df,target,list(model.X_train.columns),flattened)
         print(test_result_1)
-        utils.visualize_linearity(uid, encoded_df, target,list(model.X_train.columns))
+        utils.visualize_linearity(uid, encoded_df, target,list(model.X_train.columns),flattened)
 
         #assumption 2
         test_result_2=utils.independence_of_errors_test(model.getModel())
