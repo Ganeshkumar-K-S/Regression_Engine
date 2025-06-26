@@ -5,16 +5,12 @@
     <style>
         @font-face {
             font-family: 'Montserrat-Medium';
-            src: url("file://{{ font_path_medium }}") format('truetype');
-            font-weight: 500;
-            font-style: normal;
+            src: url("data:font/truetype;charset=utf-8;base64,{{ font_base64_medium }}") format('truetype');
         }
 
         @font-face {
             font-family: 'Montserrat-Bold';
-            src: url("file://{{ font_path_bold }}") format('truetype');
-            font-weight: 700;
-            font-style: normal;
+            src: url("data:font/truetype;charset=utf-8;base64,{{ font_base64_bold }}") format('truetype');
         }
 
         body {
@@ -132,30 +128,31 @@
             font-size: 15px;
             margin-bottom: 20px;
         }
+
         .good {
-            color: #27ae60; /* green */
+            color: #27ae60;
             font-weight: bold;
         }
 
         .moderate {
-            color: #e67e22; /* orange */
+            color: #e67e22;
             font-weight: bold;
         }
 
         .poor {
-            color: #c0392b; /* red */
+            color: #c0392b;
             font-weight: bold;
         }
-        strong{
+
+        strong {
             font-family: 'Montserrat-Bold';
         }
 
     </style>
 </head>
 <body>
-    
     <div class="header">
-        <img src="{{ icon_path }}" alt="Logo" style="position: relative; top:-10px">
+        <img src="data:image/svg+xml;base64,{{ icon_base64 }}" alt="Logo" style="height: 30px;">
         <div>
             <h1>Regression Engine</h1>
             <strong><h3>Model Report</h3></strong>
@@ -184,9 +181,9 @@
         <div class="section-title">Features</div>
         <div class="section-content">
             <ul class="features-list">
-            {% for i in features %}
-                <li>{{ i }}</li>
-            {% endfor %}
+                {% for i in features %}
+                    <li>{{ i }}</li>
+                {% endfor %}
             </ul>
         </div>
     </div>
@@ -288,6 +285,7 @@
             </ul>
         </div>
     </div>
+
     <div class="section-title">Conclusion</div>
     <p>
         Based on the provided metrics, the model demonstrates
@@ -303,7 +301,7 @@
             {% endif %}
         </strong> explanatory power, with an R² score of 
         <strong>{{ metrics['R2'] | round(4) }}</strong>.<br><br>
-    
+
         The prediction errors — Mean Absolute Error (MAE) = 
         <strong>{{ metrics['MAE'] | round(4) }}</strong> and 
         Root Mean Squared Error (RMSE) = <strong>{{ metrics['RMSE'] | round(4) }}</strong> — 
@@ -317,11 +315,9 @@
                 significant
             {% endif %}
         </strong> based on common thresholds.<br><br>
-    
+
         The adjusted R² score of <strong>{{ metrics['adjusted_R2'] | round(4) }}</strong> 
         being close to R² indicates that the model includes relevant features and is not overfitting.
     </p>
-        
-    
 </body>
 </html>

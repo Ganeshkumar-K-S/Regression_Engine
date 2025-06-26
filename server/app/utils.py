@@ -22,6 +22,10 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 import base64
 
+def to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+    
 def encode_image_to_base64(file_path):
     with open(file_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')

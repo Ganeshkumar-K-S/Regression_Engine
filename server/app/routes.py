@@ -1,10 +1,10 @@
 import os
-from flask import Blueprint, request, jsonify, current_app,session 
+from flask import Blueprint, request, jsonify, current_app,session , send_file
 from app.utils import get_attributes,to_dataframe,from_dataframe
 from app.regression import Model
 import app.cache as cache
 import app.utils as utils
-from app.utils import encode_image_to_base64
+from app.utils import encode_image_to_base64 , to_base64
 import numpy as np
 import uuid
 
@@ -466,10 +466,9 @@ def get_feature_values():
     except Exception as e:
         return jsonify({"Error":str(e)})
 
-
+import base64
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
-from flask import send_file
 
 @engine.route('/generatereport')
 def download_pdf():
@@ -480,44 +479,43 @@ def download_pdf():
         font_path_bold = os.path.join(base_dir, 'static', 'fonts', 'Montserrat-Bold.ttf')
         icon_path = os.path.join(base_dir, 'static', 'images', 'icon.svg')
 
+        # Convert assets to base64
+        font_base64_medium = to_base64(font_path_medium)
+        font_base64_bold = to_base64(font_path_bold)
+        icon_base64 = to_base64(icon_path)
+
         if 'uid' not in session:
             raise KeyError("uid not in the session")
-        uid=session.get("uid")
+        uid = session.get("uid")
         output_path = os.path.join(base_dir, 'static', 'downloads', f'{uid}.pdf')
-
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template('report.html')
-
-        
 
         if uid not in cache.cache:
             raise KeyError('Uid not in cache')
         if 'model' not in cache.cache[uid]:
             raise KeyError('model is not in the cache')
-        model=cache.cache[uid]['model']
+        model = cache.cache[uid]['model']
 
         if 'feature' not in cache.cache[uid]:
             raise KeyError('feature not in the session')
         if 'target' not in cache.cache[uid]:
             raise KeyError('Target not in session')
-        
+
         target = model.target
-        print(target)
         features = model.features
-        print(features)
-        equation=model.getEquation()
-        print(equation)
-        result= model.getAssumption()
+        equation = model.getEquation()
+        result = model.getAssumption()
         if result is None:
             raise ValueError("Assumption is not set")
-        metrics=model.getMetrics()
-        print(metrics)
-        
+        metrics = model.getMetrics()
+
         html_out = template.render(
-            font_path_medium=font_path_medium,
-            font_path_bold=font_path_bold,
-            icon_path=icon_path,
+            font_base64_medium=font_base64_medium,
+            font_base64_bold=font_base64_bold,
+            icon_base64=icon_base64,
             target=target,
             features=features,
             equation=equation,
@@ -525,8 +523,8 @@ def download_pdf():
             metrics=metrics
         )
 
-        # Generate PDF
         HTML(string=html_out, base_url=base_dir).write_pdf(output_path)
         return send_file(output_path, as_attachment=True, download_name=f"{uid}.pdf")
+
     except Exception as e:
-        return jsonify({"Error":str(e)}),404
+        return jsonify({"Error": str(e)}), 404
