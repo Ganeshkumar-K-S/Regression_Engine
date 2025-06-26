@@ -27,17 +27,6 @@ export default function App() {
     };
   }, []);
 
-  // Clear cache when visiting home page
-  useEffect(() => {
-    if (currentPage === 'home') {
-      const clearCache = () => {
-        const blob = new Blob([], { type: 'application/json' });
-        navigator.sendBeacon('http://localhost:5000/api/clearcache', blob);
-      };
-      clearCache();
-    }
-  }, [currentPage]);
-
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
