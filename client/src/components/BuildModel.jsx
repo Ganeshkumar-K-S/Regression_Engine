@@ -68,7 +68,7 @@ export default function BuildModel({ apiDone, setApiDone, accuracy, setAccuracy,
     const showSkeleton = progress === 0;
 
     return (
-        <div className="w-full max-w-6xl mx-auto mt-20 p-6">
+        <div className="w-full max-w-6xl mx-auto mt-20 p-2">
             <div className="text-lg font-semibold text-center mb-4 text-chrysler-blue-700 font-montserrat">
                 {error ? `❌ ${error}` : showSkeleton ? <Skeleton width={200} height={24} className="mx-auto" /> : progress >= 100 ? '🎉 Model Ready!' : statusText}
             </div>

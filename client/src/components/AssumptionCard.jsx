@@ -10,6 +10,9 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
     const isOutlierCase = assumptionNumber === 6;
     const allFeatures = useMemo(() => [...Object.values(features), 'const'], [features]);
 
+    // Fallback image path
+    const fallbackImagePath = '../../public/no_image_found.jpg';
+
     useEffect(() => {
         const timer = setTimeout(() => setIsVisible(true), delay);
         return () => clearTimeout(timer);
@@ -19,21 +22,26 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
         if (images.length > 0) return;
 
         const loadImages = async () => {
-            if (assumptionNumber === 1 && data.features) {
-                const imageData = await fetchImageUrls('assumption_1', uuid, allFeatures);
-                setImages(imageData);
-            } else if (assumptionNumber === 6 && allFeatures.length > 0) {
-                const before = await fetchImageUrls('before_removing_outliers', uuid, allFeatures);
-                const after = await fetchImageUrls('after_removing_outliers', uuid, allFeatures);
-                const paired = [];
+            try {
+                if (assumptionNumber === 1 && data.features) {
+                    const imageData = await fetchImageUrls('assumption_1', uuid, allFeatures);
+                    setImages(imageData);
+                } else if (assumptionNumber === 6 && allFeatures.length > 0) {
+                    const before = await fetchImageUrls('before_removing_outliers', uuid, allFeatures);
+                    const after = await fetchImageUrls('after_removing_outliers', uuid, allFeatures);
+                    const paired = [];
 
-                for (let i = 0; i < before.length; i++) {
-                    paired.push({ before: before[i], after: after[i], feature: allFeatures[i] });
+                    for (let i = 0; i < before.length; i++) {
+                        paired.push({ before: before[i], after: after[i], feature: allFeatures[i] });
+                    }
+                    setImages(paired);
+                } else {
+                    const imageData = await fetchImageUrls(`assumption_${assumptionNumber}`, uuid, ['']);
+                    setImages(imageData);
                 }
-                setImages(paired);
-            } else {
-                const imageData = await fetchImageUrls(`assumption_${assumptionNumber}`, uuid, ['']);
-                setImages(imageData);
+            } catch (error) {
+                console.error('Error loading images:', error);
+                // Images will remain empty array, triggering fallback
             }
         };
 
@@ -49,6 +57,7 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
     };
 
     const showArrows = images.length > 1;
+    const hasImages = images.length > 0;
 
     return (
         <div
@@ -74,7 +83,16 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
 
             {/* Image Section */}
             <div className="relative h-[380px] mx-6 mb-6 overflow-hidden rounded-xl bg-slate-50 shadow-inner">
-                {isOutlierCase ? (
+                {!hasImages ? (
+                    // Fallback image when no images are found
+                    <div className="flex items-center justify-center w-full h-full">
+                        <img
+                            src={fallbackImagePath}
+                            alt="No image found"
+                            className="w-full h-full object-contain opacity-70"
+                        />
+                    </div>
+                ) : isOutlierCase ? (
                     <div className="flex flex-col items-center w-full h-full relative">
                         {/* Feature Pill */}
                         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 px-4 py-1 rounded-full text-sm font-medium bg-white text-amethyst-500 shadow">
@@ -150,7 +168,6 @@ export default function AssumptionCard({ title, data, assumptionNumber, uuid, de
                     </>
                 )}
             </div>
-
 
             {/* Description Section */}
             <div className="px-6 pb-6 text-sm text-amethyst-600">

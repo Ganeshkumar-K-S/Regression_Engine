@@ -3,7 +3,8 @@ import { Droppable, Draggable } from '@hello-pangea/dnd';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import useTooltip from '../hooks/useTooltip.jsx';
-
+import {motion} from 'framer-motion';
+ 
 export default function FeatureSelector({
   attributes,
   features,
@@ -222,14 +223,17 @@ export default function FeatureSelector({
 
       {/* Start Button */}
       <div className="text-center mt-8">
-        <button
-          onClick={handleStart}
-          disabled={isLocked || isLoading}
-          className="px-6 py-2 rounded bg-purple-600 text-white font-semibold font-montserrat hover:bg-purple-700 transition disabled:opacity-50"
-        >
-          🚀 Start
-        </button>
+          <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStart}
+              disabled={isLocked || isLoading}
+              className="px-6 py-2 rounded bg-purple-600 text-white font-semibold font-montserrat hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+              🚀 Start
+          </motion.button>
       </div>
+
     </div>
   );
 }

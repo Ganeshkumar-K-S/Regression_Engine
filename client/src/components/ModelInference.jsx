@@ -9,6 +9,7 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
     const [r2Score, setR2Score] = useState(null);
     const [error, setError] = useState('');
     const [inferenceSummary, setInferenceSummary] = useState('');
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         fetch('http://localhost:5000/api/getinference', { credentials: 'include' })
@@ -17,6 +18,7 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
                 if (data.Error) throw new Error(data.Error);
                 setInferenceData(data);
                 setInferenceSummary(generateOverallSummary(data));
+                setTimeout(() => setIsLoaded(true), 100); // Trigger animations
             })
             .catch(err => setError(err.message));
 
@@ -74,7 +76,7 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
 
     if (error) {
         return (
-            <div className="text-red-500 p-4 font-montserrat text-lg text-center">
+            <div className="text-red-500 p-4 font-montserrat text-lg text-center px-6 py-10 animate-fadeIn">
                 {error}
             </div>
         );
@@ -82,6 +84,60 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-start px-6 py-10 font-montserrat space-y-10">
+            <style jsx>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-3px); }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.02); }
+                }
+                
+                .animate-fadeIn {
+                    animation: fadeIn 0.5s ease-out;
+                }
+                
+                .animate-slideUp {
+                    animation: slideUp 0.6s ease-out;
+                }
+                
+                .animate-float {
+                    animation: float 2s ease-in-out infinite;
+                }
+                
+                .animate-pulse-scale {
+                    animation: pulse 2s ease-in-out infinite;
+                }
+                
+                .hover-lift {
+                    transition: transform 0.2s ease;
+                }
+                
+                .hover-lift:hover {
+                    transform: translateY(-2px);
+                }
+                
+                tr {
+                    transition: background-color 0.2s ease;
+                }
+                
+                tr:hover {
+                    background-color: rgba(59, 130, 246, 0.05);
+                }
+            `}</style>
+
             <h2 className="text-4xl font-bold text-chrysler-blue-500 text-center">
                 🔍 Model Inference
             </h2>
@@ -95,7 +151,7 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
                 </span>
             </div>
 
-            <div className="flex justify-center w-full">
+            <div className="flex justify-center w-full animate-slideUp">
                 <div className="w-full max-w-6xl overflow-x-auto">
                     <table className="w-full table-auto text-center font-montserrat">
                         <thead>
@@ -113,12 +169,15 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
                                     const isSignificant = pVal < 0.05;
 
                                     return (
-                                        <tr key={index} className="text-chrysler-blue-700 text-sm font-semibold">
+                                        <tr 
+                                            key={index} 
+                                            className="text-chrysler-blue-700 text-sm font-semibold hover-lift"
+                                        >
                                             <td className="px-6 py-4">{item.feature}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`${
                                                     item.direction === 'positive'
-                                                        ? 'text-chrysler-blue-700'
+                                                        ? 'text-celadon-300'
                                                         : item.direction === 'negative'
                                                         ? 'text-red-600'
                                                         : 'text-gray-500'
@@ -128,14 +187,14 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span
-                                                    className="text-chrysler-blue-700"
+                                                    className="text-chrysler-blue-700 hover-lift"
                                                     data-tooltip-id={`tooltip-${index}`}
                                                 >
                                                     {pVal.toFixed(5)}
                                                 </span>
                                                 <Tooltip
                                                     id={`tooltip-${index}`}
-                                                    className="!bg-celadon-400 !text-celadon-700 font-montserrat text-sm px-3 py-1 rounded"
+                                                    className="!bg-celadon-300 !text-celadon-800 font-montserrat text-sm px-3 py-1 rounded"
                                                     content={isSignificant ? 'Statistically Significant' : 'Not Statistically Significant'}
                                                 />
                                             </td>
@@ -160,7 +219,7 @@ export default function ModelInference({ target , inferenceDone , setInferenceDo
                 </div>
             </div>
 
-            <div className="max-w-4xl text-center text-chrysler-blue-600 whitespace-pre-line text-base font-semibold leading-relaxed">
+            <div className="max-w-4xl text-center text-chrysler-blue-600 whitespace-pre-line text-base font-semibold leading-relaxed animate-slideUp animate-pulse-scale">
                 {inferenceData ? inferenceSummary : <Skeleton count={3} />}
             </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import {motion} from 'framer-motion';
 
 export default function NullHandling({ nullAttributes, attributes, nullTreated, setNullTreated }) {
     const [selectedMethods, setSelectedMethods] = useState({});
@@ -228,13 +229,15 @@ export default function NullHandling({ nullAttributes, attributes, nullTreated, 
 
             {/* Button */}
             <div className="mt-6 flex justify-center">
-                <button
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleTreatNull}
                     disabled={nullTreated || loading}
-                    className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 transition-colors font-semibold font-montserrat disabled:opacity-50"
+                    className="px-6 py-2 rounded bg-purple-600 text-white font-semibold font-montserrat hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     🛠️ Treat Null & Build Model
-                </button>
+                </motion.button>
             </div>
         </div>
     );

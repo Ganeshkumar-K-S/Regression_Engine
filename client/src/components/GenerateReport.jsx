@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 export default function GenerateReport() {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
     const handleClick = async () => {
+        setLoading(true);
+        setError('');
         try {
             const response = await fetch('http://localhost:5000/api/generatereport', {
                 method: 'GET',
-                credentials: 'include', // Include cookies
+                credentials: 'include',
             });
 
             if (!response.ok) {
@@ -23,17 +31,29 @@ export default function GenerateReport() {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Error generating report:', error);
+            setError('Failed to generate report');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <div className="flex justify-center items-center h-full">
-            <button
-                onClick={handleClick}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-            >
-                Generate Report
-            </button>
+            {loading ? (
+                <Skeleton height={44} width={180} borderRadius={12} />
+            ) : (
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleClick}
+                    className="px-6 py-2 rounded bg-purple-600 text-white font-semibold font-montserrat hover:bg-purple-700 transition"
+                >
+                    📄 Generate Report
+                </motion.button>
+            )}
+            {error && (
+                <p className="mt-4 text-red-600 text-sm absolute bottom-4">{error}</p>
+            )}
         </div>
     );
 }
