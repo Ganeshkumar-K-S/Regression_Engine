@@ -35,6 +35,7 @@ class Model:
         self.X_test = sm.add_constant(self.X_test)
 
         self.__model = sm.OLS(self.y_train, self.X_train).fit()
+        self.assumption=None
 
     def getModel(self):
         return self.__model
@@ -99,26 +100,24 @@ class Model:
         return inferences
     
     def getEquation(self):
-        equation=[]
-        summary = self.__model.summary2().tables[1] 
+        equation = []
+        summary = self.__model.summary2().tables[1]
+
         for var in summary.index:
             coef = summary.loc[var, 'Coef.']
-            if var=='const':
-                 equation.append(f"{coef:.3f}")
-            else:
-                 equation.append(f"{coef:.3f}({var})")
-        n=len(equation)
-        res=""
-        for i in range(n):
-            if i==0 and i==n-1:
-                res+=f" {equation[i]}"
-            else:
-                if equation[i][0]=='-':
-                     res+=f" - {equation[i][1:]}"
-                else:
-                     res+=f" + {equation[i]}"
-        return res
+            if var == 'const':
+                # Skip intercept in this version
+                continue
+            sign = '+' if coef >= 0 else '-'
+            equation.append(f" {sign} {abs(coef):.3f}({var})\n")
+
+        return equation
     
+    def setAssumption(self,assumption):
+        self.assumption=assumption
+        
+    def getAssumption(self):
+        return self.assumption
 def generateModel(y,X):
     return sm.OLS(y,X).fit()
 

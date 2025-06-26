@@ -7,5 +7,4 @@ statsmodels==0.14.4
 matplotlib==3.10.1
 seaborn==0.13.2
 scipy==1.16.0
-
-
+weasyprint==65.1
