@@ -43,101 +43,81 @@ Users can interactively predict the target variable by providing custom input fe
 
 ## File structure
 
-inference_engine/<br>
-├─ client/<br>
-│  ├─ public/<br>
-│  │  ├─ data_scientist_.jpeg<br>
-│  │  ├─ data_scientist.avif<br>
-│  │  └─ no_image_found.jpg<br>
-│  ├─ src/<br>
-│  │  ├─ assets/<br>
-│  │  │  ├─ csv.png<br>
-│  │  │  ├─ json.png<br>
-│  │  │  └─ logo.svg<br>
-│  │  ├─ components/<br>
-│  │  │  ├─ AssumptionCard.jsx<br>
-│  │  │  ├─ Assumptions.jsx<br>
-│  │  │  ├─ Attributes.jsx<br>
-│  │  │  ├─ BuildModel.jsx<br>
-│  │  │  ├─ DragDropWrapper.jsx<br>
-│  │  │  ├─ DropFiles.jsx<br>
-│  │  │  ├─ FeatureSelector.jsx<br>
-│  │  │  ├─ GenerateReport.jsx<br>
-│  │  │  ├─ Header.jsx<br>
-│  │  │  ├─ Hero.jsx<br>
-│  │  │  ├─ LimitationsHero.jsx<br>
-│  │  │  ├─ ModelInference.jsx<br>
-│  │  │  ├─ ModelingDataCard.jsx<br>
-│  │  │  ├─ NullHandling.jsx<br>
-│  │  │  ├─ PredictionForm.jsx<br>
-│  │  │  └─ SkeletonCard.jsx<br>
-│  │  ├─ hooks/<br>
-│  │  │  └─ useTooltip.jsx<br>
-│  │  ├─ pages/<br>
-│  │  │  ├─ ExplorePage.jsx<br>
-│  │  │  └─ HomePage.jsx<br>
-│  │  ├─ utils/<br>
-│  │  │  └─ fetchImageList.jsx<br>
-│  │  ├─ App.jsx<br>
-│  │  ├─ index.css<br>
-│  │  └─ main.jsx<br>
-│  ├─ .gitignore<br>
-│  ├─ eslint.config.js<br>
-│  ├─ index.html<br>
-│  ├─ package-lock.json<br>
-│  ├─ package.json<br>
-│  ├─ README.md<br>
-│  └─ vite.config.js<br>
-├─ files/<br>
-│  ├─ AirPassengers.csv<br>
-│  ├─ Computers.csv<br>
-│  ├─ diamonds_prices_2022.csv<br>
-│  ├─ hh_demographic.csv<br>
-│  ├─ insurance.csv<br>
-│  ├─ madrid_weather.csv<br>
-│  ├─ powerconsumption.csv<br>
-│  ├─ product.csv<br>
-│  ├─ sf_clean.csv<br>
-│  └─ taco_stands.csv<br>
-├─ server/<br>
-│  ├─ app/<br>
-│  │  ├─ _pycache_/<br>
-│  │  │  ├─ _init_.cpython-313.pyc<br>
-│  │  │  ├─ cache.cpython-313.pyc<br>
-│  │  │  ├─ config.cpython-313.pyc<br>
-│  │  │  ├─ regression.cpython-313.pyc<br>
-│  │  │  ├─ routes.cpython-313.pyc<br>
-│  │  │  └─ utils.cpython-313.pyc<br>
-│  │  ├─ static/<br>
-│  │  │  ├─ downloads/<br>
-│  │  │  │  └─ styled_report.pdf<br>
-│  │  │  ├─ fonts/<br>
-│  │  │  │  ├─ Montserrat-Bold.ttf<br>
-│  │  │  │  ├─ Montserrat-Medium.ttf<br>
-│  │  │  │  └─ Montserrat-Regular.ttf<br>
-│  │  │  └─ images/<br>
-│  │  │     ├─ after_removing_outliers/<br>
-│  │  │     ├─ assumption_1/<br>
-│  │  │     ├─ assumption_2/<br>
-│  │  │     ├─ assumption_3/<br>
-│  │  │     ├─ assumption_4/<br>
-│  │  │     ├─ assumption_5/<br>
-│  │  │     ├─ before_removing_outliers/<br>
-│  │  │     └─ icon.svg<br>
-│  │  ├─ templates/<br>
-│  │  │  └─ report.html<br>
-│  │  ├─ uploads/<br>
-│  │  ├─ _init_.py<br>
-│  │  ├─ cache.py<br>
-│  │  ├─ config.py<br>
-│  │  ├─ regression.py<br>
-│  │  ├─ routes.py<br>
-│  │  └─ utils.py<br>
-│  ├─ .gitignore<br>
-│  ├─ README.md<br>
-│  ├─ requirements.txt<br>
-│  └─ run.py<br>
-└─ .gitignore<br>
+Regression_Engine/
+├─ client/
+│  ├─ public/
+│  │  ├─ data_scientist_.jpeg
+│  │  ├─ data_scientist.avif
+│  │  └─ no_image_found.jpg
+│  ├─ src/
+│  │  ├─ assets/
+│  │  │  ├─ csv.png
+│  │  │  ├─ json.png
+│  │  │  └─ logo.svg
+│  │  ├─ components/
+│  │  │  ├─ AssumptionCard.jsx
+│  │  │  ├─ Assumptions.jsx
+│  │  │  ├─ Attributes.jsx
+│  │  │  ├─ BuildModel.jsx
+│  │  │  ├─ DragDropWrapper.jsx
+│  │  │  ├─ DropFiles.jsx
+│  │  │  ├─ FeatureSelector.jsx
+│  │  │  ├─ GenerateReport.jsx
+│  │  │  ├─ Header.jsx
+│  │  │  ├─ Hero.jsx
+│  │  │  ├─ LimitationsHero.jsx
+│  │  │  ├─ ModelInference.jsx
+│  │  │  ├─ ModelingDataCard.jsx
+│  │  │  ├─ NullHandling.jsx
+│  │  │  ├─ PredictionForm.jsx
+│  │  │  └─ SkeletonCard.jsx
+│  │  ├─ hooks/
+│  │  │  └─ useTooltip.jsx
+│  │  ├─ pages/
+│  │  │  ├─ ExplorePage.jsx
+│  │  │  └─ HomePage.jsx
+│  │  ├─ utils/
+│  │  │  └─ fetchImageList.jsx
+│  │  ├─ App.jsx
+│  │  ├─ index.css
+│  │  └─ main.jsx
+│  ├─ .gitignore
+│  ├─ eslint.config.js
+│  ├─ index.html
+│  ├─ package-lock.json
+│  ├─ package.json
+│  └─ vite.config.js
+├─ server/
+│  ├─ app/
+│  │  ├─ static/
+│  │  │  ├─ downloads/
+│  │  │  ├─ fonts/
+│  │  │  │  ├─ Montserrat-Bold.ttf
+│  │  │  │  ├─ Montserrat-Medium.ttf
+│  │  │  │  └─ Montserrat-Regular.ttf
+│  │  │  └─ images/
+│  │  │     ├─ after_removing_outliers/
+│  │  │     ├─ assumption_1/
+│  │  │     ├─ assumption_2/
+│  │  │     ├─ assumption_3/
+│  │  │     ├─ assumption_4/
+│  │  │     ├─ assumption_5/
+│  │  │     ├─ before_removing_outliers/
+│  │  │     └─ icon.svg
+│  │  ├─ templates/
+│  │  │  └─ report.html
+│  │  ├─ uploads/
+│  │  ├─ __init__.py
+│  │  ├─ cache.py
+│  │  ├─ config.py
+│  │  ├─ regression.py
+│  │  ├─ routes.py
+│  │  └─ utils.py
+│  ├─ .gitignore
+│  ├─ requirements.txt
+│  └─ run.py
+├─ .gitignore
+└─ README.md
 
 
 ## Getting Started
