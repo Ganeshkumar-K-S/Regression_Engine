@@ -43,6 +43,7 @@ Users can interactively predict the target variable by providing custom input fe
 
 ## File structure
 
+```bash
 Regression_Engine/
 ├─ client/
 │  ├─ public/
@@ -118,7 +119,7 @@ Regression_Engine/
 │  └─ run.py
 ├─ .gitignore
 └─ README.md
-
+```
 
 ## Getting Started
 
