@@ -1,7 +1,12 @@
+<p align="center">
+  <img src="client/src/assets/logo.svg" alt="Regression Engine Logo" width="120"/>
+</p>
+
 <h2 align="center">REGRESSION ENGINE</h2>
 <p align="center">
    Unveiling insights from data, one line at a time with Linear Regression!
 </p>
+
 
 ## Project description
 
